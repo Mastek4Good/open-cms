@@ -216,3 +216,37 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ---- Case management app (from quick-capture) ----
+# IDE / Editor
+.kiro
+.notes
+.vscode
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# Runtime data
+instance/
+uploads/
+
+# Environment - never commit real secrets
+.env
+.env.*
+!.env.example
+!.env.prod.example
+
+# Backups
+/backups/
+*.tar.gz.enc
+
+# Local tooling
+Makefile
+docker-compose.prod.yml
+
+# macOS
+.DS_Store
+!.env.production.example

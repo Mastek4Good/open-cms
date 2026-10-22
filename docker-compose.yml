@@ -1,0 +1,48 @@
+# LOCAL DEVELOPMENT ONLY. Not a production deployment.
+#
+# This file exists so a developer can run the web app and the transcription
+# service together with one command. It has no TLS, no backups, no secret
+# management and no process supervision beyond restart policies.
+#
+# Production requirements are in docs/operations/deployment.md.
+# docker-compose.staging.yml was removed because it was being treated as a
+# production deployment when it was never one.
+
+services:
+  web:
+    container_name: quickcapture-web
+    build: .
+    ports:
+      - "5001:5001"
+    env_file:
+      - .env
+    volumes:
+      - db_data:/app/instance
+      - uploads_data:/app/uploads
+    depends_on:
+      transcriber:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5001/login')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  transcriber:
+    build:
+      context: ./services/transcriber
+    expose:
+      - "8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  db_data:
+  uploads_data:

@@ -1,0 +1,7 @@
+/* Minimal custom styles - Tailwind handles most styling via CDN */
+
+/* Smooth page transitions */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}

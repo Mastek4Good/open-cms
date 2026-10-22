@@ -1,0 +1,461 @@
+{% extends "base.html" %}
+{% block title %}{{ case.full_name or case.identifier }} - Simon on the Streets{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-3xl">
+    <a href="{{ url_for('cases.list_cases') }}" class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-4">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Back to cases
+    </a>
+
+    <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
+        <div>
+            <h1 class="text-2xl font-bold">{{ case.full_name or case.identifier }}</h1>
+            <p class="text-sm text-gray-500 mt-0.5">{{ case.identifier }}{% if case.assigned_worker %} &middot; Key worker: {{ case.assigned_worker.first_name }}{% endif %}</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            {% if case.project %}
+            <span class="rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
+                {{ projects.get(case.project, case.project) }}
+            </span>
+            {% endif %}
+            <span class="rounded-full px-3 py-1 text-xs font-medium
+                {% if case.risk_rating == 'red' %}bg-red-100 text-red-700
+                {% elif case.risk_rating == 'amber' %}bg-amber-100 text-amber-700
+                {% elif case.risk_rating == 'green' %}bg-green-100 text-green-700
+                {% else %}bg-gray-100 text-gray-600{% endif %}">
+                risk: {{ risk_options.get(case.risk_rating, 'not set')|lower }}
+            </span>
+            <span class="rounded-full px-3 py-1 text-xs font-medium {% if case.consent_status == 'given' %}bg-green-100 text-green-700{% else %}bg-amber-100 text-amber-700{% endif %}">
+                consent: {{ consent_options.get(case.consent_status, 'not set')|lower }}
+            </span>
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        <details open class="rounded-lg border border-gray-200 bg-white p-4">
+            <summary class="cursor-pointer text-base font-semibold text-gray-900">Personal details</summary>
+            <form id="identity-form" class="case-edit-form mt-4 grid gap-4" data-case-id="{{ case.id }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <label class="text-sm font-medium text-gray-700">Name or known name
+                    <input name="full_name" value="{{ case.full_name or '' }}" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                </label>
+                <label class="text-sm font-medium text-gray-700">Phone
+                    <input name="phone_number" value="{{ case.phone_number or '' }}" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                </label>
+                <div class="grid gap-3 sm:grid-cols-3">
+                    <label class="text-sm font-medium text-gray-700">Date of birth
+                        <input name="date_of_birth" type="date" value="{{ case.date_of_birth or '' }}" data-age-target="case-age" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                    </label>
+                    <label class="text-sm font-medium text-gray-700">Age
+                        <input id="case-age" name="age" type="number" value="{{ case.age or '' }}" placeholder="Auto-filled from DOB" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                    </label>
+                    <label class="text-sm font-medium text-gray-700">Gender
+                        <input name="gender" value="{{ case.gender or '' }}" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                    </label>
+                </div>
+                <label class="text-sm font-medium text-gray-700">Ethnicity
+                    <select name="ethnicity" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                        <option value="">Not recorded</option>
+                        {% for choice in ethnicities %}
+                        <option value="{{ choice }}" {% if case.ethnicity == choice %}selected{% endif %}>{{ choice }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label class="text-sm font-medium text-gray-700">Physical description
+                    <textarea name="physical_description" rows="3" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">{{ case.physical_description or '' }}</textarea>
+                </label>
+                <label class="text-sm font-medium text-gray-700">Other contact details
+                    <input name="other_contact" value="{{ case.other_contact or '' }}" placeholder="e.g. email, or a family member's phone number" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                    <span class="mt-1 block text-xs font-normal text-gray-500">For example an email address or a family member's phone number.</span>
+                </label>
+                <label class="text-sm font-medium text-gray-700">National Insurance number
+                    <input name="ni_number" id="ni-number-input" autocomplete="off" value="{{ case.ni_number or '' }}" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase" />
+                </label>
+                <div class="text-sm font-medium text-gray-700">Location
+                    {% if case.location_w3w %}<p class="mt-1 text-sm font-normal text-gray-600">/// {{ case.location_w3w }}</p>{% endif %}
+                    <textarea name="location_address" rows="2" placeholder="Address" aria-label="Address" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">{{ case.location_address or '' }}</textarea>
+                </div>
+                <button class="w-fit rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white">Save personal details</button>
+            </form>
+        </details>
+
+        <details class="rounded-lg border border-gray-200 bg-white p-4">
+            <summary class="cursor-pointer text-base font-semibold text-gray-900">Project &amp; key worker</summary>
+            <form class="case-edit-form mt-4 grid gap-4" data-case-id="{{ case.id }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <label class="text-sm font-medium text-gray-700">Project
+                    <select name="project" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                        <option value="">Not set</option>
+                        {% for value, label in projects.items() %}
+                        <option value="{{ value }}" {% if case.project == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label class="text-sm font-medium text-gray-700">Allocated key worker
+                    <select name="key_worker_id" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                        <option value="">Not allocated</option>
+                        {% for worker in key_workers %}
+                        <option value="{{ worker.id }}" {% if case.assigned_user_id == worker.id %}selected{% endif %}>{{ worker.first_name }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <button class="w-fit rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white">Save project &amp; key worker</button>
+            </form>
+        </details>
+
+        <details open class="rounded-lg border border-gray-200 bg-white p-4">
+            <summary class="cursor-pointer text-base font-semibold text-gray-900">Support Provided</summary>
+            <form method="POST" action="{{ url_for('cases.add_interaction', case_id=case.id) }}" enctype="multipart/form-data" class="mt-4 space-y-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <fieldset>
+                    <legend class="text-sm font-medium text-gray-700 mb-2">Quick tags</legend>
+                    <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        {% for tag_type, label in tag_labels.items() %}
+                        <label class="flex min-h-11 items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm">
+                            <input type="checkbox" name="tags" value="{{ tag_type }}" class="rounded border-gray-300 text-brand-600 focus:ring-brand-500" />
+                            <span>{{ label }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </fieldset>
+                <div>
+                    <label for="interaction_note" class="block text-sm font-medium text-gray-700 mb-1">Interaction note</label>
+                    <textarea id="interaction_note" name="interaction_note" rows="4" class="offline-draft w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" data-draft-key="case-{{ case.id }}-interaction-note"></textarea>
+                </div>
+                <div>
+                    <label for="outcome" class="block text-sm font-medium text-gray-700 mb-1">Outcome</label>
+                    <input id="outcome" name="outcome" type="text" placeholder="e.g. GP attended, accommodation gained" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                </div>
+                <details class="rounded-lg border border-gray-100 p-3">
+                    <summary class="cursor-pointer text-sm font-medium text-gray-700">Optional location and document</summary>
+                    <div class="mt-3 grid gap-3">
+                        <input name="interaction_location_w3w" placeholder="what3words address" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                        <div class="grid grid-cols-2 gap-2">
+                            <input name="interaction_location_lat" placeholder="Latitude" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                            <input name="interaction_location_lng" placeholder="Longitude" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                        </div>
+                        <input name="interaction_attachment" type="file" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.txt" class="block w-full text-sm text-gray-700" />
+                    </div>
+                </details>
+                <button type="submit" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Save interaction</button>
+            </form>
+        </details>
+
+        <details class="rounded-lg border border-gray-200 bg-white p-4">
+            <summary class="cursor-pointer text-base font-semibold text-gray-900">Follow-ups</summary>
+            <div class="mt-4 space-y-3">
+                {% for task in follow_ups %}
+                <div class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 p-3">
+                    <div>
+                        <p class="text-sm font-medium text-gray-900">{{ task.title }}</p>
+                        <p class="text-xs text-gray-500">{{ task.due_date or 'No date' }} · {{ task.status }}</p>
+                    </div>
+                    {% if task.status == 'open' %}
+                    <form method="POST" action="{{ url_for('cases.complete_follow_up', case_id=case.id, task_id=task.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <button class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700">Done</button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                <form method="POST" action="{{ url_for('cases.add_follow_up', case_id=case.id) }}" class="grid gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-end">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <label class="text-sm font-medium text-gray-700">Action
+                        <textarea name="title" rows="2" maxlength="200" placeholder="What needs following up?" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"></textarea>
+                    </label>
+                    <label class="text-sm font-medium text-gray-700">Follow up on
+                        <input name="due_date" type="date" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                    </label>
+                    <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white">Add</button>
+                </form>
+            </div>
+        </details>
+
+        <details open class="rounded-lg border border-gray-200 bg-white p-4">
+            <summary class="cursor-pointer text-base font-semibold text-gray-900">Recent History</summary>
+            <div class="mt-4 space-y-3">
+                {% if interactions %}
+                    {% for interaction in interactions %}
+                    <article class="rounded-lg border border-gray-200 p-3">
+                        <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                            <time class="local-time-short" datetime="{{ interaction.occurred_at.isoformat() }}Z">{{ interaction.occurred_at.strftime('%d %b %Y %H:%M') }} UTC</time>
+                            <span>{{ interaction.worker.first_name if interaction.worker else 'Unknown' }}</span>
+                        </div>
+                        <div class="mt-2 flex flex-wrap gap-1">
+                            {% for tag in interaction.tags %}
+                            <span class="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">{{ tag.label }}</span>
+                            {% endfor %}
+                        </div>
+                        {% if interaction.outcome %}
+                        <p class="mt-2 text-sm font-medium text-gray-900">Outcome: {{ interaction.outcome }}</p>
+                        {% endif %}
+                        {% if interaction.note_content %}
+                        <div class="mt-2 text-sm text-gray-800 prose prose-sm max-w-none">{{ interaction.note_content|safe }}</div>
+                        {% endif %}
+                        {% for attachment in interaction.attachments %}
+                        <a href="{{ url_for('cases.download_attachment', attachment_id=attachment.id) }}" class="mt-2 inline-block text-xs text-brand-600 hover:underline">{{ attachment.original_filename }}</a>
+                        {% endfor %}
+                    </article>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-sm text-gray-500">No interactions yet.</p>
+                {% endif %}
+            </div>
+        </details>
+
+        <details class="rounded-lg border border-gray-200 bg-white p-4">
+            <summary class="cursor-pointer text-base font-semibold text-gray-900">Consent &amp; risk</summary>
+            <div class="mt-4 space-y-4">
+                <form class="case-edit-form grid gap-4" data-case-id="{{ case.id }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <label class="text-sm font-medium text-gray-700">Consent status
+                        <select name="consent_status" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                            {% if case.consent_status not in consent_options %}<option value="" selected disabled>Not set &ndash; choose one</option>{% endif %}
+                            {% for value, label in consent_options.items() %}
+                            <option value="{{ value }}" {% if case.consent_status == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label class="text-sm font-medium text-gray-700">Consent date
+                        <input name="consent_date" type="date" value="{{ case.consent_date or '' }}" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                    </label>
+                    <label class="text-sm font-medium text-gray-700">Risk rating
+                        <select name="risk_rating" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                            {% if case.risk_rating not in risk_options %}<option value="" selected disabled>Not set &ndash; choose one</option>{% endif %}
+                            {% for value, label in risk_options.items() %}
+                            <option value="{{ value }}" {% if case.risk_rating == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label class="text-sm font-medium text-gray-700">Risk notes
+                        <textarea name="risk_notes" rows="3" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">{{ case.risk_notes or '' }}</textarea>
+                    </label>
+                    <button class="w-fit rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white">Save consent &amp; risk</button>
+                </form>
+
+                <div class="border-t border-gray-100 pt-4">
+                    <p class="text-sm font-medium text-gray-700 mb-2">Images</p>
+                    {% for image in consent_images %}
+                    <a href="{{ url_for('cases.download_attachment', attachment_id=image.id) }}" class="block text-sm text-brand-600 hover:underline">{{ image.original_filename }}</a>
+                    {% else %}
+                    <p class="text-sm text-gray-500">No images uploaded.</p>
+                    {% endfor %}
+                    <form method="POST" action="{{ url_for('cases.add_consent_image', case_id=case.id) }}" enctype="multipart/form-data" class="mt-3 flex flex-wrap gap-3">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <input name="consent_image" type="file" accept="image/png,image/jpeg" class="text-sm" />
+                        <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white">Upload image</button>
+                    </form>
+                </div>
+            </div>
+        </details>
+
+        <details class="rounded-lg border border-gray-200 bg-white p-4">
+            <summary class="cursor-pointer text-base font-semibold text-gray-900">Documents</summary>
+            <div class="mt-4 space-y-3">
+                {% for attachment in attachments %}
+                <a href="{{ url_for('cases.download_attachment', attachment_id=attachment.id) }}" class="block text-sm text-brand-600 hover:underline">{{ attachment.original_filename }}</a>
+                {% else %}
+                <p class="text-sm text-gray-500">No documents uploaded.</p>
+                {% endfor %}
+                <form method="POST" action="{{ url_for('cases.add_attachment', case_id=case.id) }}" enctype="multipart/form-data" class="flex flex-wrap gap-3">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <input name="attachment" type="file" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.txt" class="text-sm" />
+                    <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white">Upload</button>
+                </form>
+            </div>
+        </details>
+
+        <details class="rounded-lg border border-gray-200 bg-white p-4">
+            <summary class="cursor-pointer text-base font-semibold text-gray-900">Reporting Fields</summary>
+            <form class="case-edit-form mt-4 grid gap-4" data-case-id="{{ case.id }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <label class="text-sm font-medium text-gray-700">Current situation
+                    <select name="current_situation" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                        {% for value, label in [('', 'Not recorded'), ('rough_sleeping', 'Rough sleeping'), ('temporary_accommodation', 'Temporary accommodation'), ('hotel', 'Hotel'), ('housed', 'Housed'), ('unknown', 'Unknown')] %}
+                        <option value="{{ value }}" {% if case.current_situation == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <button class="w-fit rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white">Save reporting fields</button>
+            </form>
+        </details>
+
+        <details class="rounded-lg border border-gray-200 bg-white p-4">
+            <summary class="cursor-pointer text-base font-semibold text-gray-900">Legacy Notes</summary>
+            <div class="mt-4 space-y-3">
+                {% for note in notes %}
+                <article class="rounded-lg border border-gray-200 p-3 {% if note.needs_review %}border-l-4 border-l-amber-400{% endif %}">
+                    <div class="flex justify-between gap-2 text-xs text-gray-500">
+                        <span>{{ note.source }}{% if note.needs_review %} · review needed{% endif %}</span>
+                        <time class="local-time-short" datetime="{{ note.created_at.isoformat() }}Z">{{ note.created_at.strftime('%d %b %Y %H:%M') }} UTC</time>
+                    </div>
+                    <div class="mt-2 text-sm text-gray-800 prose prose-sm max-w-none">{{ note.content|safe }}</div>
+                </article>
+                {% else %}
+                <p class="text-sm text-gray-500">No legacy notes.</p>
+                {% endfor %}
+                <form method="POST" action="{{ url_for('cases.add_note', case_id=case.id) }}" class="space-y-3">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <textarea name="content" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"></textarea>
+                    <button class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white">Add note</button>
+                </form>
+            </div>
+        </details>
+
+        <details class="rounded-lg border border-gray-200 bg-white p-4">
+            <summary class="cursor-pointer text-base font-semibold text-gray-900">Activity</summary>
+            <div class="mt-4">
+                <button type="button" id="toggle-audit-btn" class="text-sm font-medium text-brand-600 hover:text-brand-700">Load history</button>
+                <div id="audit-trail" class="hidden mt-3">
+                    <div id="audit-loading" class="text-sm text-gray-500">Loading...</div>
+                    <ul id="audit-entries" class="space-y-2 hidden"></ul>
+                    <p id="audit-empty" class="hidden text-sm text-gray-500">No activity recorded yet.</p>
+                </div>
+            </div>
+        </details>
+
+        <details class="border-t border-gray-200 pt-3">
+            <summary class="cursor-pointer text-sm font-medium text-gray-700">Who has read this case</summary>
+            <div class="mt-3">
+                <button type="button" id="access-log-btn" data-case-id="{{ case.id }}" class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">Load reading history</button>
+                <ul id="access-log-entries" class="mt-3 space-y-2 hidden text-sm text-gray-600"></ul>
+                <p id="access-log-empty" class="hidden mt-3 text-sm text-gray-500">Nobody has opened this case yet.</p>
+            </div>
+        </details>
+
+        <form method="POST" action="{{ url_for('cases.delete_case', case_id=case.id) }}" data-confirm="Archive this case? It will be hidden from active lists but not deleted." class="pt-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50">Archive Case</button>
+        </form>
+
+        {% if current_user.role == 'admin' %}
+        <details class="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
+            <summary class="cursor-pointer text-sm font-medium text-red-800">Permanently erase this case</summary>
+            <p class="mt-3 text-sm text-red-800">
+                This destroys the case, its notes, documents, voice recordings and
+                history. There is no undo. Use it only for a data protection
+                erasure request, or a record created in error — and check with the
+                charity's data protection lead first.
+            </p>
+            <form method="POST" action="{{ url_for('cases.purge_case', case_id=case.id) }}"
+                  data-confirm="Permanently erase {{ case.identifier }}? This cannot be undone."
+                  class="mt-3 space-y-3">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <div>
+                    <label for="confirm_identifier" class="block text-sm font-medium text-red-800 mb-1">
+                        Type <code class="font-mono">{{ case.identifier }}</code> to confirm
+                    </label>
+                    <input type="text" id="confirm_identifier" name="confirm_identifier" autocomplete="off"
+                           class="w-64 rounded-lg border border-red-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500" />
+                </div>
+                <div>
+                    <label for="reason" class="block text-sm font-medium text-red-800 mb-1">Reason (recorded in the erasure log)</label>
+                    <input type="text" id="reason" name="reason" maxlength="200" placeholder="erasure_request"
+                           class="w-full max-w-md rounded-lg border border-red-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500" />
+                </div>
+                <button type="submit" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">
+                    Permanently erase
+                </button>
+            </form>
+        </details>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+    (function() {
+        var caseId = {{ case.id }};
+        var csrfHeaders = window.quickCaptureCsrfHeaders();
+
+        document.querySelectorAll('.case-edit-form').forEach(function(form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var payload = {};
+                new FormData(form).forEach(function(value, key) {
+                    if (key !== 'csrf_token') payload[key] = value;
+                });
+
+                fetch('/cases/' + form.dataset.caseId + '/edit', {
+                    method: 'POST',
+                    headers: Object.assign({ 'Content-Type': 'application/json' }, csrfHeaders),
+                    body: JSON.stringify(payload)
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (!data.success) {
+                        alert(data.error || 'Failed to save.');
+                        return;
+                    }
+                    window.location.reload();
+                })
+                .catch(function() { alert('Network error.'); });
+            });
+        });
+
+        document.querySelectorAll('.offline-draft').forEach(function(input) {
+            var key = input.dataset.draftKey;
+            var stored = localStorage.getItem(key);
+            if (stored && !input.value) input.value = stored;
+            input.addEventListener('input', function() {
+                localStorage.setItem(key, input.value);
+            });
+            input.form.addEventListener('submit', function() {
+                localStorage.removeItem(key);
+            });
+        });
+
+        function calculateAge(dateValue) {
+            if (!dateValue) return '';
+            var parts = dateValue.split('-').map(Number);
+            if (parts.length !== 3 || parts.some(isNaN)) return '';
+            var birthDate = new Date(parts[0], parts[1] - 1, parts[2]);
+            var today = new Date();
+            if (birthDate > today) return '';
+            var age = today.getFullYear() - birthDate.getFullYear();
+            var hasHadBirthday = today.getMonth() > birthDate.getMonth() ||
+                (today.getMonth() === birthDate.getMonth() && today.getDate() >= birthDate.getDate());
+            return hasHadBirthday ? age : age - 1;
+        }
+
+        document.querySelectorAll('[data-age-target]').forEach(function(dateInput) {
+            var ageInput = document.getElementById(dateInput.dataset.ageTarget);
+            if (!ageInput) return;
+            var syncAge = function() {
+                ageInput.value = calculateAge(dateInput.value);
+            };
+            dateInput.addEventListener('change', syncAge);
+            syncAge();
+        });
+
+        var auditBtn = document.getElementById('toggle-audit-btn');
+        if (auditBtn) {
+            auditBtn.addEventListener('click', function() {
+                var trail = document.getElementById('audit-trail');
+                var loading = document.getElementById('audit-loading');
+                var entries = document.getElementById('audit-entries');
+                var empty = document.getElementById('audit-empty');
+                trail.classList.remove('hidden');
+                fetch('/cases/' + caseId + '/audit')
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        loading.classList.add('hidden');
+                        entries.innerHTML = '';
+                        if (!data.entries || data.entries.length === 0) {
+                            empty.classList.remove('hidden');
+                            return;
+                        }
+                        data.entries.forEach(function(entry) {
+                            var li = document.createElement('li');
+                            li.className = 'rounded border border-gray-200 p-2 text-xs text-gray-700';
+                            li.textContent = entry.timestamp + ' · ' + entry.user + ' · ' + entry.action + ' · ' + entry.field_name;
+                            entries.appendChild(li);
+                        });
+                        entries.classList.remove('hidden');
+                    });
+            });
+        }
+    })();
+</script>
+{% endblock %}
