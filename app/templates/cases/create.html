@@ -1,0 +1,424 @@
+{% extends "base.html" %}
+{% block title %}Create New Case - Simon on the Streets{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-lg">
+    <h1 class="text-2xl font-bold mb-1">Create New Case</h1>
+    <p class="text-sm text-gray-500 mb-6">Enter whatever you can &ndash; nothing is required beyond one identifying detail, note or location.</p>
+
+    <form method="POST" enctype="multipart/form-data" id="case-form" class="space-y-5">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <!-- Full name -->
+        <div>
+            <label for="full_name" class="block text-sm font-semibold text-gray-800 mb-1">
+                Full name or known name
+            </label>
+            <input
+                type="text"
+                id="full_name"
+                name="full_name"
+                placeholder="Full name or known name"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            />
+        </div>
+
+        <!-- Phone Number -->
+        <div>
+            <label for="phone_number" class="block text-sm font-semibold text-gray-800 mb-1">Phone Number</label>
+            <input
+                type="tel"
+                id="phone_number"
+                name="phone_number"
+                placeholder="07123 456789"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            />
+        </div>
+
+        <!-- Location -->
+        <div>
+            <label for="location_search" class="block text-sm font-semibold text-gray-800 mb-1">
+                Location
+            </label>
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 pointer-events-none">///</span>
+                <input
+                    type="text"
+                    id="location_search"
+                    name="location_w3w"
+                    placeholder="e.g. filled.count.soap"
+                    autocomplete="off"
+                    class="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                />
+                <!-- Autosuggest dropdown -->
+                <ul id="w3w-suggestions" class="hidden absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"></ul>
+            </div>
+            <input type="hidden" id="location_lat" name="location_lat" />
+            <input type="hidden" id="location_lng" name="location_lng" />
+            <button
+                type="button"
+                id="share-location-btn"
+                class="mt-2 inline-flex items-center gap-1 rounded-lg border border-brand-600 px-3 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50 transition-colors"
+            >
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
+                Share my location
+            </button>
+            <p id="location-status" class="mt-1 text-xs text-gray-500 hidden"></p>
+
+            <details class="mt-3 rounded-lg border border-gray-100 p-3">
+                <summary class="cursor-pointer text-sm font-medium text-gray-700">Address <span class="text-gray-400 font-normal">(optional)</span></summary>
+                <div class="mt-3">
+                    <label for="location_address" class="sr-only">Address</label>
+                    <textarea id="location_address" name="location_address" rows="3" placeholder="Street, town, postcode &ndash; whatever you know" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+                </div>
+            </details>
+        </div>
+
+        <details class="rounded-lg border border-gray-200 bg-white p-4">
+            <summary class="cursor-pointer text-sm font-semibold text-gray-800">Personal details</summary>
+            <div class="mt-4 grid gap-4">
+                <div>
+                    <label for="date_of_birth" class="block text-sm font-medium text-gray-700 mb-1">Date of birth</label>
+                    <input type="date" id="date_of_birth" name="date_of_birth" data-age-target="age" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                </div>
+                <div>
+                    <label for="age" class="block text-sm font-medium text-gray-700 mb-1">Age</label>
+                    <input type="number" id="age" name="age" min="0" max="120" placeholder="Auto-filled from DOB" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                </div>
+                <div>
+                    <label for="gender" class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                    <input type="text" id="gender" name="gender" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                </div>
+                <div>
+                    <label for="ethnicity" class="block text-sm font-medium text-gray-700 mb-1">Ethnicity</label>
+                    <select id="ethnicity" name="ethnicity" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="">Not recorded</option>
+                        {% for choice in ethnicities %}
+                        <option value="{{ choice }}">{{ choice }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="physical_description" class="block text-sm font-medium text-gray-700 mb-1">Physical description</label>
+                    <textarea id="physical_description" name="physical_description" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+                </div>
+                <div>
+                    <label for="other_contact" class="block text-sm font-medium text-gray-700 mb-1">Other contact details</label>
+                    <input type="text" id="other_contact" name="other_contact" placeholder="e.g. email, or a family member's phone number" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                    <p class="mt-1 text-xs text-gray-500">For example an email address or a family member's phone number.</p>
+                </div>
+                <div>
+                    <label for="ni_number" class="block text-sm font-medium text-gray-700 mb-1">National Insurance number</label>
+                    <input type="text" id="ni_number" name="ni_number" autocomplete="off" placeholder="e.g. QQ 12 34 56 C" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                </div>
+            </div>
+        </details>
+
+        <!-- Project -->
+        <div>
+            <label for="project" class="block text-sm font-semibold text-gray-800 mb-1">Project</label>
+            <select id="project" name="project" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                <option value="">Select a project</option>
+                {% for value, label in projects.items() %}
+                <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Key worker -->
+        <div>
+            <label for="key_worker_id" class="block text-sm font-semibold text-gray-800 mb-1">Allocated key worker</label>
+            <select id="key_worker_id" name="key_worker_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                {% for worker in key_workers %}
+                <option value="{{ worker.id }}" {% if worker.id == current_user.id %}selected{% endif %}>{{ worker.first_name }}{% if worker.id == current_user.id %} (you){% endif %}</option>
+                {% endfor %}
+            </select>
+            <p class="mt-1 text-xs text-gray-500">Defaults to you. Choose someone else if the case is being allocated to them.</p>
+        </div>
+
+        <details class="rounded-lg border border-gray-200 bg-white p-4">
+            <summary class="cursor-pointer text-sm font-semibold text-gray-800">Consent &amp; risk</summary>
+            <div class="mt-4 grid gap-4">
+                <div>
+                    <label for="consent_status" class="block text-sm font-medium text-gray-700 mb-1">Consent status</label>
+                    <select id="consent_status" name="consent_status" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        {% for value, label in consent_options.items() %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="consent_date" class="block text-sm font-medium text-gray-700 mb-1">Consent date</label>
+                    <input type="date" id="consent_date" name="consent_date" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                </div>
+                <div>
+                    <label for="risk_rating" class="block text-sm font-medium text-gray-700 mb-1">Risk rating</label>
+                    <select id="risk_rating" name="risk_rating" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        {% for value, label in risk_options.items() %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="risk_notes" class="block text-sm font-medium text-gray-700 mb-1">Risk notes</label>
+                    <textarea id="risk_notes" name="risk_notes" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+                </div>
+                <div>
+                    <label for="consent_image" class="block text-sm font-medium text-gray-700 mb-1">Image <span class="text-gray-400 font-normal">(optional)</span></label>
+                    <input type="file" id="consent_image" name="consent_image" accept="image/png,image/jpeg" class="block w-full text-sm text-gray-700" />
+                    <p class="mt-1 text-xs text-gray-500">For example a photo of a signed consent form. PNG or JPEG.</p>
+                </div>
+                <div>
+                    <label for="current_situation" class="block text-sm font-medium text-gray-700 mb-1">Current situation</label>
+                    <select id="current_situation" name="current_situation" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="">Not recorded</option>
+                        <option value="rough_sleeping">Rough sleeping</option>
+                        <option value="temporary_accommodation">Temporary accommodation</option>
+                        <option value="hotel">Hotel</option>
+                        <option value="housed">Housed</option>
+                        <option value="unknown">Unknown</option>
+                    </select>
+                </div>
+            </div>
+        </details>
+
+        <!-- Case Notes -->
+        <details id="notes-details" class="rounded-lg border border-gray-200 bg-white p-4">
+            <summary class="cursor-pointer text-sm font-semibold text-gray-800">Case notes <span class="text-gray-400 font-normal">(optional)</span></summary>
+            <div class="mt-4">
+                <label for="notes" class="sr-only">Case notes</label>
+                <textarea id="notes" name="notes" rows="5" class="offline-draft w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" data-draft-key="new-case-notes"></textarea>
+            </div>
+        </details>
+
+        <!-- Voice Note -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-800 mb-1">Voice Note <span class="text-gray-400 font-normal">(optional)</span></label>
+            <p class="text-xs text-gray-500 mb-2">Record a brief spoken note to attach to this case. Once recorded, you can play back, view the transcript, or copy the transcript into your notes.</p>
+            <div id="voice-note-container" class="rounded-lg border border-gray-200 p-4 bg-white">
+                <div id="voice-controls">
+                    <button
+                        type="button"
+                        id="record-btn"
+                        class="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                        <svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd"/></svg>
+                        Start Recording
+                    </button>
+                </div>
+                <div id="voice-playback" class="hidden mt-3">
+                    <audio id="audio-playback" controls class="w-full"></audio>
+                </div>
+                <!-- Transcription display -->
+                <div id="transcription-section" class="hidden mt-3">
+                    <div id="transcription-loading" class="hidden flex items-center gap-2 text-sm text-gray-500">
+                        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                        Transcribing...
+                    </div>
+                    <div id="transcription-result" class="hidden">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="inline-flex items-center gap-1 text-xs font-medium text-purple-700">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd"/></svg>
+                                Transcript
+                            </span>
+                            <button type="button" id="copy-to-notes-btn" class="text-xs font-medium text-brand-600 hover:text-brand-700">
+                                Copy to notes
+                            </button>
+                        </div>
+                        <p id="transcription-text" class="text-sm text-gray-700 bg-gray-50 rounded-md p-3 border border-gray-100"></p>
+                    </div>
+                    <div id="transcription-error" class="hidden text-sm text-red-600"></div>
+                </div>
+            </div>
+            <input type="file" id="voice_note" name="voice_note" class="hidden" accept="audio/*" />
+            <input type="hidden" id="voice_transcript" name="voice_transcript" />
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-3 pt-2">
+            <a href="{{ url_for('cases.list_cases') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                Cancel
+            </a>
+            <button type="submit" class="rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors">
+                Create Case
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- Voice Note Recording + Transcription ---
+        var recordBtn = document.getElementById('record-btn');
+        var voicePlayback = document.getElementById('voice-playback');
+        var audioPlayback = document.getElementById('audio-playback');
+        var voiceNoteInput = document.getElementById('voice_note');
+        var transcriptionSection = document.getElementById('transcription-section');
+        var transcriptionLoading = document.getElementById('transcription-loading');
+        var transcriptionResult = document.getElementById('transcription-result');
+        var transcriptionText = document.getElementById('transcription-text');
+        var transcriptionError = document.getElementById('transcription-error');
+        var copyToNotesBtn = document.getElementById('copy-to-notes-btn');
+
+        var mediaRecorder = null;
+        var audioChunks = [];
+        var isRecording = false;
+
+        recordBtn.addEventListener('click', function() {
+            if (!isRecording) {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        });
+
+        function startRecording() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('Audio recording is not supported in this browser.');
+                return;
+            }
+
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(function(stream) {
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.addEventListener('dataavailable', function(event) {
+                        audioChunks.push(event.data);
+                    });
+
+                    mediaRecorder.addEventListener('stop', function() {
+                        var audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        var audioUrl = URL.createObjectURL(audioBlob);
+
+                        // Show playback
+                        audioPlayback.src = audioUrl;
+                        voicePlayback.classList.remove('hidden');
+
+                        // Attach file to hidden input
+                        var file = new File([audioBlob], 'voice_note.webm', { type: 'audio/webm' });
+                        var dt = new DataTransfer();
+                        dt.items.add(file);
+                        voiceNoteInput.files = dt.files;
+
+                        // Stop all tracks
+                        stream.getTracks().forEach(function(track) { track.stop(); });
+
+                        // Trigger transcription
+                        transcribeAudio(audioBlob);
+                    });
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    recordBtn.innerHTML =
+                        '<svg class="w-4 h-4 text-red-500 animate-pulse" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="6"/></svg> Stop Recording';
+                    recordBtn.classList.add('border-red-300', 'text-red-600');
+                    recordBtn.classList.remove('border-gray-300', 'text-gray-700');
+                })
+                .catch(function(err) {
+                    alert('Could not access microphone: ' + err.message);
+                });
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            isRecording = false;
+            recordBtn.innerHTML =
+                '<svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd"/></svg> Re-record';
+            recordBtn.classList.remove('border-red-300', 'text-red-600');
+            recordBtn.classList.add('border-gray-300', 'text-gray-700');
+        }
+
+        function transcribeAudio(audioBlob) {
+            // Show loading state
+            transcriptionSection.classList.remove('hidden');
+            transcriptionLoading.classList.remove('hidden');
+            transcriptionResult.classList.add('hidden');
+            transcriptionError.classList.add('hidden');
+
+            var formData = new FormData();
+            formData.append('audio', audioBlob, 'voice_note.webm');
+
+            fetch('/transcribe', {
+                method: 'POST',
+                headers: window.quickCaptureCsrfHeaders(),
+                body: formData
+            })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                transcriptionLoading.classList.add('hidden');
+
+                if (data.text) {
+                    transcriptionText.textContent = data.text;
+                    transcriptionResult.classList.remove('hidden');
+                    // Store transcript in hidden field for form submission
+                    document.getElementById('voice_transcript').value = data.text;
+                } else {
+                    transcriptionError.textContent = data.error || 'Transcription unavailable.';
+                    transcriptionError.classList.remove('hidden');
+                }
+            })
+            .catch(function(err) {
+                transcriptionLoading.classList.add('hidden');
+                transcriptionError.textContent = 'Could not reach transcription service.';
+                transcriptionError.classList.remove('hidden');
+            });
+        }
+
+        // Copy transcript to the note field
+        copyToNotesBtn.addEventListener('click', function() {
+            var text = transcriptionText.textContent;
+            if (text) {
+                var notes = document.getElementById('notes');
+                document.getElementById('notes-details').open = true;
+                if (notes.value.trim()) {
+                    notes.value = notes.value + '\n' + text;
+                } else {
+                    notes.value = text;
+                }
+            }
+        });
+
+        document.querySelectorAll('.offline-draft').forEach(function(input) {
+            var key = input.dataset.draftKey;
+            var stored = localStorage.getItem(key);
+            if (stored && !input.value) {
+                input.value = stored;
+                var holder = input.closest('details');
+                if (holder) holder.open = true;
+            }
+            input.addEventListener('input', function() {
+                localStorage.setItem(key, input.value);
+            });
+            input.form.addEventListener('submit', function() {
+                localStorage.removeItem(key);
+            });
+        });
+
+        function calculateAge(dateValue) {
+            if (!dateValue) return '';
+            var parts = dateValue.split('-').map(Number);
+            if (parts.length !== 3 || parts.some(isNaN)) return '';
+            var birthDate = new Date(parts[0], parts[1] - 1, parts[2]);
+            var today = new Date();
+            if (birthDate > today) return '';
+            var age = today.getFullYear() - birthDate.getFullYear();
+            var hasHadBirthday = today.getMonth() > birthDate.getMonth() ||
+                (today.getMonth() === birthDate.getMonth() && today.getDate() >= birthDate.getDate());
+            return hasHadBirthday ? age : age - 1;
+        }
+
+        document.querySelectorAll('[data-age-target]').forEach(function(dateInput) {
+            var ageInput = document.getElementById(dateInput.dataset.ageTarget);
+            if (!ageInput) return;
+            var syncAge = function() {
+                ageInput.value = calculateAge(dateInput.value);
+            };
+            dateInput.addEventListener('change', syncAge);
+            syncAge();
+        });
+    });
+</script>
+{% endblock %}
