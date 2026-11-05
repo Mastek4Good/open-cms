@@ -23,7 +23,7 @@ from app.models.case import (
 from app.models.case_attachment import AttachmentKind
 from app.models.case_interaction import InteractionTagType
 from app.services.access_log_service import AccessAction, AccessLogService
-from app.services.case_service import CaseService
+from app.services.case_service import ALLOWED_AUDIO_EXTENSIONS, CaseService
 from app.services.retention_service import REASON_ERASURE_REQUEST, RetentionService
 from app.views import cases_bp
 from app.views.auth import admin_required
@@ -786,8 +786,18 @@ def transcribe_audio():
 
     from app.services.transcription_client import TranscriptionClient
 
+    # The extension comes from the client, so it is never used directly. It is
+    # matched against a fixed whitelist and the *whitelisted constant* becomes
+    # the temp file suffix. An uploaded name like "a./../../x" therefore cannot
+    # inject path separators into the temp file path.
+    requested = (
+        audio_file.filename.rsplit(".", 1)[-1].lower() if "." in audio_file.filename else "webm"
+    )
+    ext = next((allowed for allowed in ALLOWED_AUDIO_EXTENSIONS if allowed == requested), None)
+    if ext is None:
+        return jsonify({"error": "Unsupported audio file type"}), 400
+
     # Save to a temp file for the transcription client
-    ext = audio_file.filename.rsplit(".", 1)[-1].lower() if "." in audio_file.filename else "webm"
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=f".{ext}")
     try:
         audio_file.save(tmp.name)
