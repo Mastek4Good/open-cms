@@ -34,7 +34,7 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - name: Hygiene hooks (skip local-only hooks)
-        run: SKIP=no-commit-to-branch,ruff,ruff-format,pytest,uv-lock,conventional-commit uv run pre-commit run --all-files
+        run: SKIP=no-commit-to-branch,ruff,ruff-format,pytest,uv-lock,conventional-commit uv run pre-commit run --all-files --show-diff-on-failure
 
   test:
     name: Tests (Python ${{ matrix.python-version }})
