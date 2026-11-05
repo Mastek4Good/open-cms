@@ -41,4 +41,6 @@ class AuditLog(db.Model):
     user = db.relationship("User", backref="audit_logs", lazy="select")
 
     def __repr__(self):
-        return f"<AuditLog {self.id} case={self.case_id} action={self.action} field={self.field_name}>"
+        return (
+            f"<AuditLog {self.id} case={self.case_id} action={self.action} field={self.field_name}>"
+        )

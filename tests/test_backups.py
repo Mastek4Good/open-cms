@@ -40,9 +40,7 @@ def sample_data(tmp_path):
 def test_a_backup_archive_is_written(sample_data, tmp_path):
     destination = tmp_path / "backups"
 
-    path = create_backup(
-        sample_data["database"], sample_data["uploads"], str(destination), KEY
-    )
+    path = create_backup(sample_data["database"], sample_data["uploads"], str(destination), KEY)
 
     assert os.path.isfile(path)
     assert os.path.basename(path).startswith(BACKUP_PREFIX)
@@ -103,9 +101,7 @@ def test_a_backup_restores_to_the_same_data(sample_data, tmp_path):
     restored_db = target / "database.db"
     rows = sqlite3.connect(restored_db).execute("SELECT ni_number FROM cases").fetchall()
     assert rows == [("QQ123456C",)]
-    assert (target / "uploads" / "1" / "plan.txt").read_text() == (
-        "sensitive support plan"
-    )
+    assert (target / "uploads" / "1" / "plan.txt").read_text() == ("sensitive support plan")
 
 
 def test_restoring_without_the_key_fails(sample_data, tmp_path):
@@ -165,9 +161,7 @@ def test_an_overwrite_can_be_asked_for_explicitly(sample_data, tmp_path):
 
     restore_backup(path, str(target), encryption_key=KEY, overwrite=True)
 
-    rows = sqlite3.connect(target / "database.db").execute(
-        "SELECT ni_number FROM cases"
-    ).fetchall()
+    rows = sqlite3.connect(target / "database.db").execute("SELECT ni_number FROM cases").fetchall()
     assert rows == [("QQ123456C",)]
 
 
@@ -176,11 +170,16 @@ def test_the_cli_refuses_to_write_an_unencrypted_backup(sample_data, tmp_path, m
 
     monkeypatch.delenv("BACKUP_ENCRYPTION_KEY", raising=False)
 
-    exit_code = main([
-        "--database", sample_data["database"],
-        "--uploads", sample_data["uploads"],
-        "--destination", str(tmp_path / "backups"),
-    ])
+    exit_code = main(
+        [
+            "--database",
+            sample_data["database"],
+            "--uploads",
+            sample_data["uploads"],
+            "--destination",
+            str(tmp_path / "backups"),
+        ]
+    )
 
     assert exit_code == 1
     assert "BACKUP_ENCRYPTION_KEY" in capsys.readouterr().err
@@ -209,18 +208,14 @@ def test_pruning_keeps_only_the_newest_backups(sample_data, tmp_path):
 
 def test_pruning_keeps_everything_when_keep_is_zero(sample_data, tmp_path):
     destination = tmp_path / "backups"
-    create_backup(
-        sample_data["database"], sample_data["uploads"], str(destination), KEY
-    )
+    create_backup(sample_data["database"], sample_data["uploads"], str(destination), KEY)
 
     assert prune_backups(str(destination), keep=0) == []
     assert len(os.listdir(destination)) == 1
 
 
 def test_a_backup_works_when_there_are_no_uploads_yet(sample_data, tmp_path):
-    path = create_backup(
-        sample_data["database"], None, str(tmp_path / "backups"), KEY
-    )
+    path = create_backup(sample_data["database"], None, str(tmp_path / "backups"), KEY)
     target = tmp_path / "restored"
 
     restore_backup(path, str(target), encryption_key=KEY)

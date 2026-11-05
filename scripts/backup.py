@@ -24,7 +24,6 @@ import sys
 import tarfile
 import tempfile
 from datetime import UTC, datetime
-from typing import List, Optional
 
 from cryptography.fernet import Fernet
 
@@ -48,10 +47,10 @@ def snapshot_database(source_path: str, target_path: str) -> None:
 
 def create_backup(
     database_path: str,
-    uploads_dir: Optional[str],
+    uploads_dir: str | None,
     destination_dir: str,
-    encryption_key: Optional[str] = None,
-    timestamp: Optional[datetime] = None,
+    encryption_key: str | None = None,
+    timestamp: datetime | None = None,
 ) -> str:
     """Write one backup archive and return its path."""
     timestamp = timestamp or datetime.now(UTC)
@@ -71,17 +70,13 @@ def create_backup(
                 archive.add(uploads_dir, arcname="uploads")
 
         if encryption_key:
-            output_path = os.path.join(
-                destination_dir, f"{BACKUP_PREFIX}{stamp}{ENCRYPTED_SUFFIX}"
-            )
+            output_path = os.path.join(destination_dir, f"{BACKUP_PREFIX}{stamp}{ENCRYPTED_SUFFIX}")
             with open(archive_path, "rb") as handle:
                 ciphertext = Fernet(encryption_key.encode()).encrypt(handle.read())
             with open(output_path, "wb") as handle:
                 handle.write(ciphertext)
         else:
-            output_path = os.path.join(
-                destination_dir, f"{BACKUP_PREFIX}{stamp}{PLAIN_SUFFIX}"
-            )
+            output_path = os.path.join(destination_dir, f"{BACKUP_PREFIX}{stamp}{PLAIN_SUFFIX}")
             shutil.copy2(archive_path, output_path)
 
     # Backups contain every case record. Nobody but the backup user should be
@@ -90,7 +85,7 @@ def create_backup(
     return output_path
 
 
-def prune_backups(destination_dir: str, keep: int) -> List[str]:
+def prune_backups(destination_dir: str, keep: int) -> list[str]:
     """Delete all but the newest `keep` backups. Returns what was removed."""
     if keep <= 0 or not os.path.isdir(destination_dir):
         return []
@@ -122,9 +117,7 @@ def main(argv=None) -> int:
     )
     parser.add_argument(
         "--uploads",
-        default=os.environ.get(
-            "BACKUP_UPLOADS_DIR", os.path.join(os.getcwd(), "uploads")
-        ),
+        default=os.environ.get("BACKUP_UPLOADS_DIR", os.path.join(os.getcwd(), "uploads")),
         help="Directory holding case attachments and voice notes.",
     )
     parser.add_argument(

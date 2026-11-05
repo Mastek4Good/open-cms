@@ -4,6 +4,8 @@ import io
 import os
 from datetime import UTC, datetime, timedelta
 
+from conftest import csrf_token, login_admin, register
+
 from app.extensions import db
 from app.models.access_log import AccessLog
 from app.models.audit_log import AuditLog
@@ -17,7 +19,6 @@ from app.services.retention_service import (
     REASON_RETENTION_POLICY,
     RetentionService,
 )
-from conftest import csrf_token, login_admin, register
 
 
 def create_case(identifier="SOTS-0001", **fields):
@@ -49,9 +50,7 @@ def test_purging_destroys_the_case_row(client, app):
     register(client, "worker@example.org")
     case = create_case()
 
-    RetentionService(app.config["UPLOAD_FOLDER"]).purge_case(
-        case, reason=REASON_ERASURE_REQUEST
-    )
+    RetentionService(app.config["UPLOAD_FOLDER"]).purge_case(case, reason=REASON_ERASURE_REQUEST)
 
     assert Case.query.count() == 0
 
@@ -60,15 +59,11 @@ def test_purging_destroys_child_records(client, app):
     register(client, "worker@example.org")
     case = create_case()
     db.session.add(CaseNote(case_id=case.id, content="<p>A note.</p>"))
-    db.session.add(
-        AuditLog(case_id=case.id, user_id=1, action="created", field_name="case")
-    )
+    db.session.add(AuditLog(case_id=case.id, user_id=1, action="created", field_name="case"))
     db.session.add(AccessLog(user_id=1, case_id=case.id, action="viewed_case"))
     db.session.commit()
 
-    RetentionService(app.config["UPLOAD_FOLDER"]).purge_case(
-        case, reason=REASON_ERASURE_REQUEST
-    )
+    RetentionService(app.config["UPLOAD_FOLDER"]).purge_case(case, reason=REASON_ERASURE_REQUEST)
 
     assert CaseNote.query.count() == 0
     assert AuditLog.query.count() == 0
@@ -91,9 +86,7 @@ def test_audit_log_values_are_erased_too(client, app):
     )
     db.session.commit()
 
-    RetentionService(app.config["UPLOAD_FOLDER"]).purge_case(
-        case, reason=REASON_ERASURE_REQUEST
-    )
+    RetentionService(app.config["UPLOAD_FOLDER"]).purge_case(case, reason=REASON_ERASURE_REQUEST)
 
     remaining = db.session.execute(db.text("SELECT old_value FROM audit_logs")).all()
     assert remaining == []
@@ -133,9 +126,7 @@ def test_the_erasure_log_survives_the_case_it_describes(client, app):
     register(client, "worker@example.org")
     case = create_case(identifier="SOTS-0042")
 
-    RetentionService(app.config["UPLOAD_FOLDER"]).purge_case(
-        case, reason=REASON_ERASURE_REQUEST
-    )
+    RetentionService(app.config["UPLOAD_FOLDER"]).purge_case(case, reason=REASON_ERASURE_REQUEST)
 
     assert Case.query.count() == 0
     assert ErasureLog.query.count() == 1
@@ -151,9 +142,7 @@ def test_the_erasure_log_holds_no_personal_data(client, app):
         mental_health_notes="Diagnosed with schizophrenia.",
     )
 
-    RetentionService(app.config["UPLOAD_FOLDER"]).purge_case(
-        case, reason=REASON_ERASURE_REQUEST
-    )
+    RetentionService(app.config["UPLOAD_FOLDER"]).purge_case(case, reason=REASON_ERASURE_REQUEST)
 
     columns = {column.name for column in ErasureLog.__table__.columns}
     assert columns == {
@@ -174,9 +163,7 @@ def test_purging_one_case_leaves_others_untouched(client, app):
     db.session.add(CaseNote(case_id=keep.id, content="<p>Keep me.</p>"))
     db.session.commit()
 
-    RetentionService(app.config["UPLOAD_FOLDER"]).purge_case(
-        remove, reason=REASON_ERASURE_REQUEST
-    )
+    RetentionService(app.config["UPLOAD_FOLDER"]).purge_case(remove, reason=REASON_ERASURE_REQUEST)
 
     assert [case.identifier for case in Case.query.all()] == ["SOTS-0001"]
     assert CaseNote.query.count() == 1
@@ -188,12 +175,8 @@ def test_purging_one_case_leaves_others_untouched(client, app):
 def test_only_archived_cases_past_the_period_expire(client, app):
     register(client, "worker@example.org")
     create_case(identifier="SOTS-ACTIVE")
-    create_case(
-        identifier="SOTS-RECENT", archived_at=datetime.now(UTC) - timedelta(days=10)
-    )
-    create_case(
-        identifier="SOTS-OLD", archived_at=datetime.now(UTC) - timedelta(days=400)
-    )
+    create_case(identifier="SOTS-RECENT", archived_at=datetime.now(UTC) - timedelta(days=10))
+    create_case(identifier="SOTS-OLD", archived_at=datetime.now(UTC) - timedelta(days=400))
 
     expired = RetentionService(app.config["UPLOAD_FOLDER"]).find_expired_cases(365)
 
@@ -209,9 +192,7 @@ def test_an_active_case_is_never_expired_by_the_job(client, app):
 
 def test_the_retention_job_purges_expired_cases(client, app):
     register(client, "worker@example.org")
-    create_case(
-        identifier="SOTS-OLD", archived_at=datetime.now(UTC) - timedelta(days=400)
-    )
+    create_case(identifier="SOTS-OLD", archived_at=datetime.now(UTC) - timedelta(days=400))
     create_case(identifier="SOTS-ACTIVE")
 
     results = RetentionService(app.config["UPLOAD_FOLDER"]).purge_expired_cases(365)
@@ -280,9 +261,7 @@ def test_purging_requires_a_csrf_token(client):
     login_admin(client)
     case = create_case(identifier="SOTS-0042")
 
-    response = client.post(
-        f"/cases/{case.id}/purge", data={"confirm_identifier": "SOTS-0042"}
-    )
+    response = client.post(f"/cases/{case.id}/purge", data={"confirm_identifier": "SOTS-0042"})
 
     assert response.status_code == 400
     assert Case.query.count() == 1

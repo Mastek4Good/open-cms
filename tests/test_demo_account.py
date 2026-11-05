@@ -6,19 +6,18 @@ from datetime import time as dt_time
 from zoneinfo import ZoneInfo
 
 import pytest
+from conftest import csrf_token, login, register
+from test_config_guard import safe_production_config
+from test_viable_mvp import create_case
 
 from app.models.case import Case
 from app.models.erasure_log import ErasureLog
 from app.models.user import User
+from app.security.config_guard import collect_production_config_errors
 from app.services import demo_service
 from app.services.demo_service import most_recent_reset, reset_demo_data
 from app.services.mfa_service import MfaService
 from app.services.seed_service import DEMO_CASE_DEFINITIONS, seed_demo_account
-
-from conftest import csrf_token, login, register
-from test_config_guard import safe_production_config
-from app.security.config_guard import collect_production_config_errors
-from test_viable_mvp import create_case
 
 DEMO_EMAIL = "demo@quickcapture.local"
 DEMO_PASSWORD = "demo-password-123"
@@ -271,9 +270,7 @@ def test_a_failed_reset_does_not_break_the_request_or_retry_every_time(
     assert marker.stat().st_mtime > old
 
 
-def test_a_reset_already_in_progress_is_not_repeated(
-    app, tmp_path, demo_with_cases, monkeypatch
-):
+def test_a_reset_already_in_progress_is_not_repeated(app, tmp_path, demo_with_cases, monkeypatch):
     import fcntl
 
     calls = []

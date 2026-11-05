@@ -64,9 +64,7 @@ def main(argv=None) -> int:
             )
 
         access_pruned = AccessLogService.from_config(app.config).prune(access_days)
-        attempts_pruned = LoginThrottleService.from_config(app.config).prune(
-            attempt_days
-        )
+        attempts_pruned = LoginThrottleService.from_config(app.config).prune(attempt_days)
 
         print(f"Erased {len(results)} case(s).")
         print(f"Pruned {access_pruned} access log row(s).")

@@ -1,5 +1,4 @@
 import re
-from typing import Optional
 
 from app.repositories.case_repository import CaseRepository
 
@@ -19,9 +18,9 @@ class IdentifierService:
 
     def generate(
         self,
-        location_w3w: Optional[str] = None,
-        notes: Optional[str] = None,
-        transcript: Optional[str] = None,
+        location_w3w: str | None = None,
+        notes: str | None = None,
+        transcript: str | None = None,
     ) -> str:
         """Generate a unique identifier for a case.
 
@@ -40,7 +39,7 @@ class IdentifierService:
                 return identifier
             sequence += 1
 
-    def _extract_location_part(self, location_w3w: Optional[str]) -> str:
+    def _extract_location_part(self, location_w3w: str | None) -> str:
         """Extract the first word from a What3Words address."""
         if not location_w3w:
             return "UNK"
@@ -51,9 +50,7 @@ class IdentifierService:
             return parts[0].upper()[:8]
         return "UNK"
 
-    def _extract_keyword(
-        self, notes: Optional[str], transcript: Optional[str]
-    ) -> str:
+    def _extract_keyword(self, notes: str | None, transcript: str | None) -> str:
         """Extract a meaningful keyword from notes or transcript.
 
         Strips HTML tags and picks the first meaningful word (>3 chars).

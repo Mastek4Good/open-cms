@@ -75,6 +75,24 @@ git push origin AdamDev
 
 Note: There are ways to reduce the number of commands required (for example by configuring an _upstream_ branch), but for a beginner it is often better to be explicit. The above commands pushed the changes to a branch named AdamDev in my fork (and created this branch to do so, if necessary). It is recommended not to merge this to the main branch in your own fork, but instead navigate on github to the Mastek4Good/Open-cms repo to create you pull request. This maintains a cleaner git history.
 
+### Code quality checks
+
+The repo uses [pre-commit](https://pre-commit.com) to run the same checks locally that CI runs. Set it up once after cloning:
+
+```
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-dev.txt
+.venv/bin/pre-commit install
+```
+
+- **On commit:** ruff lint (with autofix) and format, whitespace/EOF/YAML/TOML checks, private-key detection, a large-file check, and a block on committing directly to `main`.
+- **On commit message:** must follow [Conventional Commits](https://www.conventionalcommits.org) (`feat:`, `fix:`, `docs:`, `test:`, `chore:` ...).
+- **On push:** the full pytest suite.
+
+Run everything manually with `.venv/bin/pre-commit run --all-files`, or just the linter with `.venv/bin/ruff check . && .venv/bin/ruff format --check .`.
+
+GitHub Actions (`.github/workflows`) re-runs lint, format, tests and a Docker build on every pull request, plus dependency audit, CodeQL and secret scanning. PR titles must also be Conventional Commits. Dependabot opens weekly update PRs.
+
 ### Pull Request
 
 If you are quick, you will see a nice banner that directly leads to a pull request creation:

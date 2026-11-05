@@ -1,0 +1,34 @@
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+extend-exclude = ["app/static/vendor"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",  # pycodestyle
+    "F",       # pyflakes
+    "I",       # isort
+    "B",       # bugbear
+    "UP",      # pyupgrade
+    "S",       # bandit-style security checks
+    "SIM",     # simplifications
+]
+ignore = [
+    "E501",    # line length is handled by the formatter
+    "S101",    # assert is fine in tests
+    "SIM102",  # nested ifs are sometimes clearer
+    "SIM115",  # NamedTemporaryFile(delete=False) is managed manually
+    "UP046",   # keep Generic[T]; PEP 695 syntax adds no value here
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106", "S107", "S108", "S311", "S608"]
+# Column names come from constants, never user input; values are bound parameters.
+"app/migrations.py" = ["S608"]
+# Documented dev-only sentinels, rejected in production by app.security.config_guard.
+"config.py" = ["S105"]
+# Dev entry point only; production runs under gunicorn.
+"main.py" = ["S104"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

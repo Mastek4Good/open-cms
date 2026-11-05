@@ -54,9 +54,7 @@ class Config:
     # Idle timeout. The cookie is refreshed on every request, so this is time
     # since last activity, not time since login. Short by default because
     # workers carry these sessions on phones in the field.
-    PERMANENT_SESSION_LIFETIME = timedelta(
-        minutes=_env_int("SESSION_IDLE_MINUTES", 30)
-    )
+    PERMANENT_SESSION_LIFETIME = timedelta(minutes=_env_int("SESSION_IDLE_MINUTES", 30))
     SESSION_REFRESH_EACH_REQUEST = True
 
     # --- Login throttling (blocker 3) ------------------------------------

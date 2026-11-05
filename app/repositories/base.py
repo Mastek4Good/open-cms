@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, Optional
+from abc import ABC
+from typing import Generic, TypeVar
 
 from app.extensions import db
 
@@ -16,7 +16,7 @@ class BaseRepository(ABC, Generic[T]):
 
     model: type[T]
 
-    def get_by_id(self, entity_id: int) -> Optional[T]:
+    def get_by_id(self, entity_id: int) -> T | None:
         return db.session.get(self.model, entity_id)
 
     def get_all(self) -> list[T]:

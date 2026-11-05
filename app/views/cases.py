@@ -1,8 +1,18 @@
 import csv
 from io import StringIO
 
-from flask import Response, render_template, request, flash, redirect, url_for, jsonify, send_from_directory, current_app
-from flask_login import login_required, current_user
+from flask import (
+    Response,
+    current_app,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    url_for,
+)
+from flask_login import current_user, login_required
 
 from app.models.case import (
     ETHNICITY_CHOICES,
@@ -286,27 +296,29 @@ def edit_case(case_id):
     if error:
         return jsonify({"error": error}), 400
 
-    return jsonify({
-        "success": True,
-        "full_name": updated_case.full_name or "",
-        "phone_number": updated_case.phone_number or "",
-        "ni_number": updated_case.ni_number or "",
-        "date_of_birth": updated_case.date_of_birth or "",
-        "age": updated_case.age or "",
-        "gender": updated_case.gender or "",
-        "physical_description": updated_case.physical_description or "",
-        "other_contact": updated_case.other_contact or "",
-        "consent_status": updated_case.consent_status or "",
-        "consent_date": updated_case.consent_date or "",
-        "risk_rating": updated_case.risk_rating or "",
-        "risk_notes": updated_case.risk_notes or "",
-        "mental_health_notes": updated_case.mental_health_notes or "",
-        "current_situation": updated_case.current_situation or "",
-        "ethnicity": updated_case.ethnicity or "",
-        "location_address": updated_case.location_address or "",
-        "project": updated_case.project or "",
-        "key_worker_id": updated_case.assigned_user_id or "",
-    })
+    return jsonify(
+        {
+            "success": True,
+            "full_name": updated_case.full_name or "",
+            "phone_number": updated_case.phone_number or "",
+            "ni_number": updated_case.ni_number or "",
+            "date_of_birth": updated_case.date_of_birth or "",
+            "age": updated_case.age or "",
+            "gender": updated_case.gender or "",
+            "physical_description": updated_case.physical_description or "",
+            "other_contact": updated_case.other_contact or "",
+            "consent_status": updated_case.consent_status or "",
+            "consent_date": updated_case.consent_date or "",
+            "risk_rating": updated_case.risk_rating or "",
+            "risk_notes": updated_case.risk_notes or "",
+            "mental_health_notes": updated_case.mental_health_notes or "",
+            "current_situation": updated_case.current_situation or "",
+            "ethnicity": updated_case.ethnicity or "",
+            "location_address": updated_case.location_address or "",
+            "project": updated_case.project or "",
+            "key_worker_id": updated_case.assigned_user_id or "",
+        }
+    )
 
 
 @cases_bp.route("/cases/<int:case_id>/notes/<int:note_id>/edit", methods=["POST"])
@@ -347,6 +359,7 @@ def add_note(case_id):
     if voice_transcript:
         # Voice transcript takes precedence — save as transcription note only
         from app.models.case_note import NoteSource
+
         case_service.add_note(
             case_id=case.id,
             content=f"<p>{voice_transcript}</p>",
@@ -430,11 +443,13 @@ def update_category(case_id):
     if error:
         return jsonify({"error": error}), 400
 
-    return jsonify({
-        "success": True,
-        "category": updated_case.category,
-        "ni_number": updated_case.ni_number or "",
-    })
+    return jsonify(
+        {
+            "success": True,
+            "category": updated_case.category,
+            "ni_number": updated_case.ni_number or "",
+        }
+    )
 
 
 @cases_bp.route("/cases/<int:case_id>/actions", methods=["GET"])
@@ -446,17 +461,19 @@ def get_actions(case_id):
         return jsonify({"error": "Case not found"}), 404
 
     actions = case_service.get_actions_for_case(case_id)
-    return jsonify({
-        "actions": [
-            {
-                "id": a.id,
-                "action_type": a.action_type,
-                "label": a.label,
-                "completed": a.completed,
-            }
-            for a in actions
-        ]
-    })
+    return jsonify(
+        {
+            "actions": [
+                {
+                    "id": a.id,
+                    "action_type": a.action_type,
+                    "label": a.label,
+                    "completed": a.completed,
+                }
+                for a in actions
+            ]
+        }
+    )
 
 
 @cases_bp.route("/cases/<int:case_id>/actions", methods=["POST"])
@@ -476,18 +493,20 @@ def update_actions(case_id):
         actions=actions_data,
     )
 
-    return jsonify({
-        "success": True,
-        "actions": [
-            {
-                "id": a.id,
-                "action_type": a.action_type,
-                "label": a.label,
-                "completed": a.completed,
-            }
-            for a in actions
-        ]
-    })
+    return jsonify(
+        {
+            "success": True,
+            "actions": [
+                {
+                    "id": a.id,
+                    "action_type": a.action_type,
+                    "label": a.label,
+                    "completed": a.completed,
+                }
+                for a in actions
+            ],
+        }
+    )
 
 
 @cases_bp.route("/cases/<int:case_id>/ni-number", methods=["POST"])
@@ -531,20 +550,22 @@ def audit_trail(case_id):
     audit_service = AuditService()
     entries = audit_service.get_audit_trail(case_id)
 
-    return jsonify({
-        "entries": [
-            {
-                "id": entry.id,
-                "action": entry.action,
-                "field_name": entry.field_name,
-                "old_value": entry.old_value,
-                "new_value": entry.new_value,
-                "timestamp": (entry.timestamp.isoformat() + "Z") if entry.timestamp else None,
-                "user": entry.user.first_name if entry.user else "Unknown",
-            }
-            for entry in entries
-        ]
-    })
+    return jsonify(
+        {
+            "entries": [
+                {
+                    "id": entry.id,
+                    "action": entry.action,
+                    "field_name": entry.field_name,
+                    "old_value": entry.old_value,
+                    "new_value": entry.new_value,
+                    "timestamp": (entry.timestamp.isoformat() + "Z") if entry.timestamp else None,
+                    "user": entry.user.first_name if entry.user else "Unknown",
+                }
+                for entry in entries
+            ]
+        }
+    )
 
 
 @cases_bp.route("/cases/<int:case_id>/interactions", methods=["POST"])
@@ -708,7 +729,18 @@ def reports_export():
 
     output = StringIO()
     writer = csv.writer(output)
-    writer.writerow(["case_identifier", "case_name", "interaction_date", "worker", "tags", "outcome", "risk_rating", "current_situation"])
+    writer.writerow(
+        [
+            "case_identifier",
+            "case_name",
+            "interaction_date",
+            "worker",
+            "tags",
+            "outcome",
+            "risk_rating",
+            "current_situation",
+        ]
+    )
 
     from app.models.case_interaction import CaseInteraction
 
@@ -717,16 +749,18 @@ def reports_export():
         case = interaction.case
         if case.archived_at:
             continue
-        writer.writerow([
-            case.identifier,
-            case.full_name or "",
-            interaction.occurred_at.isoformat() if interaction.occurred_at else "",
-            interaction.worker.first_name if interaction.worker else "",
-            "; ".join(tag.label for tag in interaction.tags),
-            interaction.outcome or "",
-            case.risk_rating or "unknown",
-            case.current_situation or "",
-        ])
+        writer.writerow(
+            [
+                case.identifier,
+                case.full_name or "",
+                interaction.occurred_at.isoformat() if interaction.occurred_at else "",
+                interaction.worker.first_name if interaction.worker else "",
+                "; ".join(tag.label for tag in interaction.tags),
+                interaction.outcome or "",
+                case.risk_rating or "unknown",
+                case.current_situation or "",
+            ]
+        )
 
     return Response(
         output.getvalue(),
@@ -747,8 +781,9 @@ def transcribe_audio():
     if not audio_file or not audio_file.filename:
         return jsonify({"error": "No audio file provided"}), 400
 
-    import tempfile
     import os
+    import tempfile
+
     from app.services.transcription_client import TranscriptionClient
 
     # Save to a temp file for the transcription client
@@ -767,7 +802,6 @@ def transcribe_audio():
             return jsonify({"error": "Transcription failed or returned empty"}), 502
     finally:
         os.unlink(tmp.name)
-
 
 
 @cases_bp.route("/location/autosuggest", methods=["POST"])
@@ -821,20 +855,20 @@ def case_access_log(case_id):
 
     entries = AccessLogService.from_config(current_app.config).get_for_case(case_id)
 
-    return jsonify({
-        "entries": [
-            {
-                "id": entry.id,
-                "action": entry.action,
-                "resource": entry.resource,
-                "user": entry.user.first_name if entry.user else "Unknown",
-                "timestamp": (
-                    entry.created_at.isoformat() + "Z" if entry.created_at else None
-                ),
-            }
-            for entry in entries
-        ]
-    })
+    return jsonify(
+        {
+            "entries": [
+                {
+                    "id": entry.id,
+                    "action": entry.action,
+                    "resource": entry.resource,
+                    "user": entry.user.first_name if entry.user else "Unknown",
+                    "timestamp": (entry.created_at.isoformat() + "Z" if entry.created_at else None),
+                }
+                for entry in entries
+            ]
+        }
+    )
 
 
 @cases_bp.route("/cases/<int:case_id>/purge", methods=["POST"])
@@ -855,8 +889,7 @@ def purge_case(case_id):
     confirmation = request.form.get("confirm_identifier", "").strip()
     if confirmation != case.identifier:
         flash(
-            f"Type the case identifier ({case.identifier}) to confirm permanent "
-            "erasure.",
+            f"Type the case identifier ({case.identifier}) to confirm permanent erasure.",
             category="error",
         )
         return redirect(url_for("cases.view_case", case_id=case_id))

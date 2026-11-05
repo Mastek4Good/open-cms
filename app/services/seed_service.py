@@ -1,6 +1,5 @@
 import os
 from datetime import UTC, date, datetime, timedelta
-from typing import Optional
 
 import pyotp
 from flask import current_app
@@ -14,7 +13,6 @@ from app.models.case_interaction import CaseInteraction, InteractionTag, Interac
 from app.models.case_note import CaseNote, NoteSource
 from app.models.follow_up_task import FollowUpStatus, FollowUpTask
 from app.models.user import User
-
 
 DEMO_CASE_DEFINITIONS = [
     {
@@ -63,8 +61,16 @@ DEMO_CASE_DEFINITIONS = [
             },
         ],
         "follow_ups": [
-            {"title": "Check accommodation conversation", "due_offset": 1, "status": FollowUpStatus.OPEN},
-            {"title": "Confirm drop-in attendance", "due_offset": -7, "status": FollowUpStatus.DONE},
+            {
+                "title": "Check accommodation conversation",
+                "due_offset": 1,
+                "status": FollowUpStatus.OPEN,
+            },
+            {
+                "title": "Confirm drop-in attendance",
+                "due_offset": -7,
+                "status": FollowUpStatus.DONE,
+            },
         ],
         "attachments": [
             {
@@ -95,7 +101,11 @@ DEMO_CASE_DEFINITIONS = [
         "current_situation": "temporary_accommodation",
         "created_days_ago": 62,
         "notes": [
-            {"days_ago": 62, "content": "<p>Formal client record created after referral.</p>", "source": NoteSource.MANUAL},
+            {
+                "days_ago": 62,
+                "content": "<p>Formal client record created after referral.</p>",
+                "source": NoteSource.MANUAL,
+            },
         ],
         "interactions": [
             {
@@ -137,7 +147,11 @@ DEMO_CASE_DEFINITIONS = [
         "current_situation": "rough_sleeping",
         "created_days_ago": 3,
         "notes": [
-            {"days_ago": 3, "content": "<p>No name shared. Created record using location and description.</p>", "source": NoteSource.MANUAL},
+            {
+                "days_ago": 3,
+                "content": "<p>No name shared. Created record using location and description.</p>",
+                "source": NoteSource.MANUAL,
+            },
         ],
         "interactions": [
             {
@@ -148,7 +162,11 @@ DEMO_CASE_DEFINITIONS = [
             },
         ],
         "follow_ups": [
-            {"title": "Revisit location on evening outreach", "due_offset": 0, "status": FollowUpStatus.OPEN},
+            {
+                "title": "Revisit location on evening outreach",
+                "due_offset": 0,
+                "status": FollowUpStatus.OPEN,
+            },
         ],
         "attachments": [],
     },
@@ -171,7 +189,11 @@ DEMO_CASE_DEFINITIONS = [
         "current_situation": "hotel",
         "created_days_ago": 18,
         "notes": [
-            {"days_ago": 18, "content": "<p>Added after GP referral conversation.</p>", "source": NoteSource.MANUAL},
+            {
+                "days_ago": 18,
+                "content": "<p>Added after GP referral conversation.</p>",
+                "source": NoteSource.MANUAL,
+            },
         ],
         "interactions": [
             {
@@ -188,7 +210,11 @@ DEMO_CASE_DEFINITIONS = [
             },
         ],
         "follow_ups": [
-            {"title": "Confirm clinic appointment outcome", "due_offset": 2, "status": FollowUpStatus.OPEN},
+            {
+                "title": "Confirm clinic appointment outcome",
+                "due_offset": 2,
+                "status": FollowUpStatus.OPEN,
+            },
         ],
         "attachments": [],
     },
@@ -212,7 +238,11 @@ DEMO_CASE_DEFINITIONS = [
         "current_situation": "temporary_accommodation",
         "created_days_ago": 45,
         "notes": [
-            {"days_ago": 45, "content": "<p>Client record created for housing support.</p>", "source": NoteSource.MANUAL},
+            {
+                "days_ago": 45,
+                "content": "<p>Client record created for housing support.</p>",
+                "source": NoteSource.MANUAL,
+            },
         ],
         "interactions": [
             {
@@ -229,7 +259,11 @@ DEMO_CASE_DEFINITIONS = [
             },
         ],
         "follow_ups": [
-            {"title": "Check housing review decision", "due_offset": 6, "status": FollowUpStatus.OPEN},
+            {
+                "title": "Check housing review decision",
+                "due_offset": 6,
+                "status": FollowUpStatus.OPEN,
+            },
         ],
         "attachments": [
             {
@@ -254,7 +288,11 @@ DEMO_CASE_DEFINITIONS = [
         "current_situation": "unknown",
         "created_days_ago": 7,
         "notes": [
-            {"days_ago": 7, "content": "<p>Brief drop-in conversation. No ongoing support agreed yet.</p>", "source": NoteSource.MANUAL},
+            {
+                "days_ago": 7,
+                "content": "<p>Brief drop-in conversation. No ongoing support agreed yet.</p>",
+                "source": NoteSource.MANUAL,
+            },
         ],
         "interactions": [
             {
@@ -286,7 +324,11 @@ DEMO_CASE_DEFINITIONS = [
         "current_situation": "rough_sleeping",
         "created_days_ago": 15,
         "notes": [
-            {"days_ago": 15, "content": "<p>Case opened due to escalating risk and repeated contact.</p>", "source": NoteSource.MANUAL},
+            {
+                "days_ago": 15,
+                "content": "<p>Case opened due to escalating risk and repeated contact.</p>",
+                "source": NoteSource.MANUAL,
+            },
         ],
         "interactions": [
             {
@@ -303,7 +345,11 @@ DEMO_CASE_DEFINITIONS = [
             },
         ],
         "follow_ups": [
-            {"title": "Team lead safeguarding review", "due_offset": 1, "status": FollowUpStatus.OPEN},
+            {
+                "title": "Team lead safeguarding review",
+                "due_offset": 1,
+                "status": FollowUpStatus.OPEN,
+            },
         ],
         "attachments": [
             {
@@ -331,7 +377,11 @@ DEMO_CASE_DEFINITIONS = [
         "current_situation": "housed",
         "created_days_ago": 84,
         "notes": [
-            {"days_ago": 84, "content": "<p>Transferred from active support to client record after accommodation stabilised.</p>", "source": NoteSource.MANUAL},
+            {
+                "days_ago": 84,
+                "content": "<p>Transferred from active support to client record after accommodation stabilised.</p>",
+                "source": NoteSource.MANUAL,
+            },
         ],
         "interactions": [
             {
@@ -362,7 +412,11 @@ DEMO_CASE_DEFINITIONS = [
         "current_situation": "rough_sleeping",
         "created_days_ago": 5,
         "notes": [
-            {"days_ago": 5, "content": "<p>Short contact only. Person accepted food but declined further discussion.</p>", "source": NoteSource.MANUAL},
+            {
+                "days_ago": 5,
+                "content": "<p>Short contact only. Person accepted food but declined further discussion.</p>",
+                "source": NoteSource.MANUAL,
+            },
         ],
         "interactions": [
             {
@@ -373,7 +427,11 @@ DEMO_CASE_DEFINITIONS = [
             },
         ],
         "follow_ups": [
-            {"title": "Check same location during morning outreach", "due_offset": 3, "status": FollowUpStatus.OPEN},
+            {
+                "title": "Check same location during morning outreach",
+                "due_offset": 3,
+                "status": FollowUpStatus.OPEN,
+            },
         ],
         "attachments": [],
     },
@@ -395,7 +453,11 @@ DEMO_CASE_DEFINITIONS = [
         "current_situation": "hotel",
         "created_days_ago": 22,
         "notes": [
-            {"days_ago": 22, "content": "<p>Ongoing support started after day centre appointment.</p>", "source": NoteSource.MANUAL},
+            {
+                "days_ago": 22,
+                "content": "<p>Ongoing support started after day centre appointment.</p>",
+                "source": NoteSource.MANUAL,
+            },
         ],
         "interactions": [
             {
@@ -412,8 +474,16 @@ DEMO_CASE_DEFINITIONS = [
             },
         ],
         "follow_ups": [
-            {"title": "Review letters at next appointment", "due_offset": 5, "status": FollowUpStatus.OPEN},
-            {"title": "Accommodation meeting transport", "due_offset": -4, "status": FollowUpStatus.DONE},
+            {
+                "title": "Review letters at next appointment",
+                "due_offset": 5,
+                "status": FollowUpStatus.OPEN,
+            },
+            {
+                "title": "Accommodation meeting transport",
+                "due_offset": -4,
+                "status": FollowUpStatus.DONE,
+            },
         ],
         "attachments": [
             {
@@ -425,7 +495,7 @@ DEMO_CASE_DEFINITIONS = [
 ]
 
 
-def seed_demo_account() -> Optional[User]:
+def seed_demo_account() -> User | None:
     if not current_app.config.get("DEMO_ACCOUNT_ENABLED"):
         return None
 
@@ -482,14 +552,13 @@ def _enrol_shared_demo_mfa(user: User) -> bool:
     return True
 
 
-def seed_demo_cases(user: Optional[User]) -> None:
+def seed_demo_cases(user: User | None) -> None:
     if not user or not current_app.config.get("DEMO_CASES_ENABLED"):
         return
 
     identifiers = [case_data["identifier"] for case_data in DEMO_CASE_DEFINITIONS]
     existing = {
-        case.identifier
-        for case in Case.query.filter(Case.identifier.in_(identifiers)).all()
+        case.identifier for case in Case.query.filter(Case.identifier.in_(identifiers)).all()
     }
 
     for case_data in DEMO_CASE_DEFINITIONS:
@@ -652,7 +721,7 @@ _DEMO_CONSENT_IMAGE = bytes.fromhex(
 )
 
 
-def _dob_for_age(age: Optional[int]) -> Optional[str]:
+def _dob_for_age(age: int | None) -> str | None:
     if age is None:
         return None
     today = date.today()
@@ -662,7 +731,7 @@ def _dob_for_age(age: Optional[int]) -> Optional[str]:
         return date(today.year - age, 2, 28).isoformat()
 
 
-def _date_days_ago(days_ago: Optional[int]) -> Optional[str]:
+def _date_days_ago(days_ago: int | None) -> str | None:
     if days_ago is None:
         return None
     return (date.today() - timedelta(days=days_ago)).isoformat()
