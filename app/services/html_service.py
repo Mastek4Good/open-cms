@@ -2,7 +2,6 @@ import re
 
 import bleach
 
-
 ALLOWED_TAGS = [
     "p",
     "br",

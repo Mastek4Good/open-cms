@@ -1,7 +1,7 @@
 """Apply the data retention policy.
 
-    python -m scripts.retention          # report what would be destroyed
-    python -m scripts.retention --apply  # destroy it
+    uv run python -m scripts.retention          # report what would be destroyed
+    uv run python -m scripts.retention --apply  # destroy it
 
 Blocker 11. Archived cases previously stayed on disk forever. This job
 permanently erases archived cases past their retention period, and prunes
@@ -64,9 +64,7 @@ def main(argv=None) -> int:
             )
 
         access_pruned = AccessLogService.from_config(app.config).prune(access_days)
-        attempts_pruned = LoginThrottleService.from_config(app.config).prune(
-            attempt_days
-        )
+        attempts_pruned = LoginThrottleService.from_config(app.config).prune(attempt_days)
 
         print(f"Erased {len(results)} case(s).")
         print(f"Pruned {access_pruned} access log row(s).")

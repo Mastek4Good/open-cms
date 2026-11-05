@@ -48,9 +48,7 @@ class AccessLog(db.Model):
     resource = db.Column(db.String(200), nullable=True)
     ip_address = db.Column(db.String(45), nullable=True)
     user_agent = db.Column(db.String(300), nullable=True)
-    created_at = db.Column(
-        db.DateTime(timezone=True), default=func.now(), index=True
-    )
+    created_at = db.Column(db.DateTime(timezone=True), default=func.now(), index=True)
 
     user = db.relationship("User", lazy="select")
 

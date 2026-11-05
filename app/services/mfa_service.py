@@ -14,7 +14,6 @@ import re
 import secrets
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import List, Optional, Tuple
 
 import pyotp
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -35,15 +34,15 @@ class MfaEnrolment:
 
     secret: str
     provisioning_uri: str
-    recovery_codes: List[str]
+    recovery_codes: list[str]
 
 
 class MfaService:
-    def is_required_for(self, user: User, required_roles: List[str]) -> bool:
+    def is_required_for(self, user: User, required_roles: list[str]) -> bool:
         """Whether this user's role obliges them to enrol."""
         return getattr(user, "role", None) in required_roles
 
-    def needs_enrolment(self, user: User, required_roles: List[str]) -> bool:
+    def needs_enrolment(self, user: User, required_roles: list[str]) -> bool:
         """Whether this user must enrol before using the app."""
         return self.is_required_for(user, required_roles) and not user.mfa_enabled
 
@@ -61,9 +60,7 @@ class MfaService:
         user.mfa_confirmed_at = None
         db.session.commit()
 
-        provisioning_uri = pyotp.TOTP(secret).provisioning_uri(
-            name=user.email, issuer_name=issuer
-        )
+        provisioning_uri = pyotp.TOTP(secret).provisioning_uri(name=user.email, issuer_name=issuer)
 
         return MfaEnrolment(
             secret=secret,
@@ -73,9 +70,7 @@ class MfaService:
             recovery_codes=[],
         )
 
-    def confirm_enrolment(
-        self, user: User, code: str
-    ) -> Tuple[bool, Optional[str], List[str]]:
+    def confirm_enrolment(self, user: User, code: str) -> tuple[bool, str | None, list[str]]:
         """Activate MFA once the user proves they can generate a valid code.
 
         Returns (success, error_message, recovery_codes).
@@ -105,7 +100,7 @@ class MfaService:
 
     def verify(
         self, user: User, code: str, accept_any_code: bool = False
-    ) -> Tuple[bool, Optional[str]]:
+    ) -> tuple[bool, str | None]:
         """Verify a login-time code, accepting either a TOTP or a recovery code.
 
         `accept_any_code` is for the shared demo account only: any 6 digits
@@ -129,11 +124,9 @@ class MfaService:
         return False, "That code was not correct. Try again."
 
     def unused_recovery_code_count(self, user: User) -> int:
-        return MfaRecoveryCode.query.filter_by(
-            user_id=user.id, used_at=None
-        ).count()
+        return MfaRecoveryCode.query.filter_by(user_id=user.id, used_at=None).count()
 
-    def regenerate_recovery_codes(self, user: User) -> List[str]:
+    def regenerate_recovery_codes(self, user: User) -> list[str]:
         """Replace every recovery code. Previously issued codes stop working."""
         MfaRecoveryCode.query.filter_by(user_id=user.id).delete()
         codes = self._issue_recovery_codes(user)
@@ -149,7 +142,7 @@ class MfaService:
             return False
         return pyotp.TOTP(secret).verify(code, valid_window=TOTP_VALID_WINDOW)
 
-    def _issue_recovery_codes(self, user: User) -> List[str]:
+    def _issue_recovery_codes(self, user: User) -> list[str]:
         """Create fresh recovery codes, returning the plaintext to show once."""
         codes = []
         for _ in range(RECOVERY_CODE_COUNT):
@@ -167,9 +160,7 @@ class MfaService:
 
     def _consume_recovery_code(self, user: User, code: str) -> bool:
         """Match and burn a recovery code. Each one works exactly once."""
-        candidates = MfaRecoveryCode.query.filter_by(
-            user_id=user.id, used_at=None
-        ).all()
+        candidates = MfaRecoveryCode.query.filter_by(user_id=user.id, used_at=None).all()
 
         for candidate in candidates:
             if check_password_hash(candidate.code_hash, code):

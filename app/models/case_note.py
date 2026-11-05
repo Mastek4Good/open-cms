@@ -30,9 +30,7 @@ class CaseNote(db.Model):
 
     # Metadata
     created_at = db.Column(db.DateTime(timezone=True), default=func.now())
-    updated_at = db.Column(
-        db.DateTime(timezone=True), default=func.now(), onupdate=func.now()
-    )
+    updated_at = db.Column(db.DateTime(timezone=True), default=func.now(), onupdate=func.now())
 
     # Foreign key to the parent case
     case_id = db.Column(db.Integer, db.ForeignKey("cases.id"), nullable=False)

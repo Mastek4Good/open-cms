@@ -2,12 +2,12 @@
 
 import pytest
 
-from config import DEV_DEMO_PASSWORD, DEV_INVITE_CODE, DEV_SECRET_KEY
 from app.security.config_guard import (
     ConfigurationError,
     collect_production_config_errors,
     validate_production_config,
 )
+from config import DEV_DEMO_PASSWORD, DEV_INVITE_CODE, DEV_SECRET_KEY
 
 
 def safe_production_config(**overrides):
@@ -39,9 +39,7 @@ def test_missing_secret_key_is_rejected():
 
 
 def test_development_secret_key_is_rejected():
-    errors = collect_production_config_errors(
-        safe_production_config(SECRET_KEY=DEV_SECRET_KEY)
-    )
+    errors = collect_production_config_errors(safe_production_config(SECRET_KEY=DEV_SECRET_KEY))
 
     assert any("development default" in error for error in errors)
 
@@ -53,17 +51,13 @@ def test_short_secret_key_is_rejected():
 
 
 def test_missing_encryption_keys_are_rejected():
-    errors = collect_production_config_errors(
-        safe_production_config(FIELD_ENCRYPTION_KEYS="")
-    )
+    errors = collect_production_config_errors(safe_production_config(FIELD_ENCRYPTION_KEYS=""))
 
     assert any("FIELD_ENCRYPTION_KEYS" in error for error in errors)
 
 
 def test_insecure_session_cookie_is_rejected():
-    errors = collect_production_config_errors(
-        safe_production_config(SESSION_COOKIE_SECURE=False)
-    )
+    errors = collect_production_config_errors(safe_production_config(SESSION_COOKIE_SECURE=False))
 
     assert any("SESSION_COOKIE_SECURE" in error for error in errors)
 
@@ -111,9 +105,7 @@ def test_default_demo_password_is_rejected():
 
 
 def test_demo_cases_are_rejected_in_production():
-    errors = collect_production_config_errors(
-        safe_production_config(DEMO_CASES_ENABLED=True)
-    )
+    errors = collect_production_config_errors(safe_production_config(DEMO_CASES_ENABLED=True))
 
     assert any("DEMO_CASES_ENABLED" in error for error in errors)
 
@@ -165,9 +157,7 @@ def test_every_problem_is_reported_at_once():
 
 def test_validate_raises_with_all_reasons_listed():
     with pytest.raises(ConfigurationError) as excinfo:
-        validate_production_config(
-            safe_production_config(SECRET_KEY="", FIELD_ENCRYPTION_KEYS="")
-        )
+        validate_production_config(safe_production_config(SECRET_KEY="", FIELD_ENCRYPTION_KEYS=""))
 
     message = str(excinfo.value)
     assert "Refusing to start" in message

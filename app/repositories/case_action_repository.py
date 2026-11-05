@@ -10,9 +10,7 @@ class CaseActionRepository(BaseRepository[CaseAction]):
     def get_by_case_id(self, case_id: int) -> list[CaseAction]:
         """Get all actions for a case."""
         return (
-            CaseAction.query.filter_by(case_id=case_id)
-            .order_by(CaseAction.created_at.asc())
-            .all()
+            CaseAction.query.filter_by(case_id=case_id).order_by(CaseAction.created_at.asc()).all()
         )
 
     def get_completed_for_case(self, case_id: int) -> list[CaseAction]:
@@ -26,6 +24,7 @@ class CaseActionRepository(BaseRepository[CaseAction]):
     def delete_by_case_id(self, case_id: int) -> int:
         """Delete all actions for a case. Returns count deleted."""
         from app.extensions import db
+
         count = CaseAction.query.filter_by(case_id=case_id).delete()
         db.session.commit()
         return count

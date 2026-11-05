@@ -109,7 +109,7 @@ from a risk assessment at 11pm is worse.
 ## Verifying the controls
 
 ```bash
-.venv/bin/python -m pytest -q
+uv run pytest -q
 ```
 
 | Suite | Covers |

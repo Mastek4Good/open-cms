@@ -1,6 +1,6 @@
 """Generate the secrets a production deployment needs.
 
-    python -m scripts.generate_keys
+    uv run python -m scripts.generate_keys
 
 Prints values for SECRET_KEY, FIELD_ENCRYPTION_KEYS and BACKUP_ENCRYPTION_KEY.
 Nothing is written to disk - paste them into the secret store or environment

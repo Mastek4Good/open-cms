@@ -16,7 +16,6 @@ production app without keys.
 """
 
 import logging
-from typing import List, Optional
 
 from cryptography.fernet import Fernet, InvalidToken, MultiFernet
 from flask import current_app
@@ -36,14 +35,14 @@ def generate_key() -> str:
     return Fernet.generate_key().decode()
 
 
-def parse_keys(raw: Optional[str]) -> List[str]:
+def parse_keys(raw: str | None) -> list[str]:
     """Split a comma-separated key list, ignoring blanks and whitespace."""
     if not raw:
         return []
     return [key.strip() for key in raw.split(",") if key.strip()]
 
 
-def _cipher() -> Optional[MultiFernet]:
+def _cipher() -> MultiFernet | None:
     """Build a MultiFernet from the configured keys, or None if unconfigured."""
     try:
         raw = current_app.config.get("FIELD_ENCRYPTION_KEYS", "")
@@ -69,7 +68,7 @@ class ConfigurationKeyError(RuntimeError):
     """Raised when the configured encryption keys cannot be used."""
 
 
-def encrypt_value(value: Optional[str]) -> Optional[str]:
+def encrypt_value(value: str | None) -> str | None:
     """Encrypt a string for storage. Returns plaintext if no keys are set."""
     if value is None or value == "":
         return value
@@ -83,7 +82,7 @@ def encrypt_value(value: Optional[str]) -> Optional[str]:
     return CIPHER_PREFIX + cipher.encrypt(value.encode()).decode()
 
 
-def decrypt_value(value: Optional[str]) -> Optional[str]:
+def decrypt_value(value: str | None) -> str | None:
     """Decrypt a stored string.
 
     Values without the cipher prefix are returned unchanged, which is what
@@ -104,7 +103,7 @@ def decrypt_value(value: Optional[str]) -> Optional[str]:
         return None
 
     try:
-        return cipher.decrypt(value[len(CIPHER_PREFIX):].encode()).decode()
+        return cipher.decrypt(value[len(CIPHER_PREFIX) :].encode()).decode()
     except InvalidToken:
         logger.error(
             "Could not decrypt a stored value with any configured key. If a "
