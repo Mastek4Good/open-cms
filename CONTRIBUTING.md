@@ -77,7 +77,7 @@ Note: There are ways to reduce the number of commands required (for example by c
 
 ### Code quality checks
 
-The repo uses [pre-commit](https://pre-commit.com) to run the same checks locally that CI runs. Set it up once after cloning:
+The repo uses [pre-commit](https://pre-commit.com) to run the same checks locally that CI runs. All hooks are defined in this repo (ruff and uv from the lockfile, plus `hooks/checks.py`); none are downloaded from third-party hook repositories. Set it up once after cloning:
 
 ```
 uv sync   # creates .venv from uv.lock, including dev tools

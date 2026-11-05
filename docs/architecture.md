@@ -75,7 +75,8 @@ graph LR
 ├── main.py                        Entry point
 ├── config.py                      App configuration (Dev/Prod)
 ├── pyproject.toml / uv.lock       Dependencies (uv) and tool config
-├── .pre-commit-config.yaml        Local commit/push quality gates
+├── .pre-commit-config.yaml        Local commit/push quality gates (all hooks in-repo)
+├── hooks/                         In-repo hook code used by pre-commit (hooks/checks.py)
 ├── .github/                       CI and security workflows, Dependabot
 ├── Dockerfile                     Local development container
 ├── docker-compose.yml             Local development orchestration

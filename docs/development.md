@@ -65,11 +65,29 @@ not the project itself, and code is run from the repo root.
 
 ### Pre-commit hooks
 
+pre-commit is only the runner. **Every hook is defined in this repo** (`repo: local`
+in `.pre-commit-config.yaml`); nothing is cloned from third-party hook
+repositories, so no hook code is fetched from outside the project. The tools
+(ruff, uv) are the versions pinned in `uv.lock`, and the file-hygiene checks are
+our own code in `hooks/checks.py`, with tests in `tests/test_precommit_hooks.py`.
+
 | Stage | Checks |
 | --- | --- |
 | commit | ruff lint (with autofix) and ruff format; trailing whitespace; end-of-file; YAML and TOML validity; merge-conflict markers; files over 500 KB; private keys; direct commits to `main` blocked; `uv-lock` (lockfile matches `pyproject.toml`) |
 | commit-msg | [Conventional Commits](https://www.conventionalcommits.org): `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert` |
 | pre-push | full pytest suite (`pytest -q -x`) |
+
+| Hook id | Implemented by |
+| --- | --- |
+| `trailing-whitespace`, `end-of-file-fixer`, `check-yaml`, `check-toml`, `check-merge-conflict`, `check-added-large-files`, `detect-private-key`, `no-commit-to-branch`, `conventional-commit` | `hooks/checks.py` |
+| `ruff`, `ruff-format` | `uv run ruff` |
+| `uv-lock` | `uv lock --check` |
+| `pytest` | `uv run pytest` |
+
+To add or change a check, edit `hooks/checks.py` (add it to the `CHECKS` table),
+add tests, then reference it from `.pre-commit-config.yaml` with `language: system`
+and `entry: uv run python -m hooks.checks <name>`. To skip one hook for a single
+run: `SKIP=<hook id> git commit ...`.
 
 If a hook fixes files, the commit is aborted. Review the changes, `git add`
 them and commit again. Run all hooks on demand with:
@@ -87,7 +105,7 @@ fail the pull request.
 uv run ruff check .            # lint (add --fix to autofix)
 uv run ruff format .           # format (--check to verify only)
 uv run pytest -q               # tests
-uv run pre-commit autoupdate   # bump hook versions
+uv run python -m hooks.checks check-yaml <files>   # run one in-repo check by hand
 ```
 
 ### Ruff

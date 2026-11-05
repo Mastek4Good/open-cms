@@ -45,6 +45,12 @@ Options considered for enforcing quality: documentation only (relies on goodwill
 
 Hooks give fast feedback; CI is the enforcement point because hooks can be skipped with `--no-verify`.
 
+### Amendment (2026-11-05): hooks live in this repo
+
+The first version of the pre-commit config pulled hooks from four third-party repositories pinned by tag. A tag can be moved, and each hook runs arbitrary code on every contributor's machine at every commit, so that was a supply-chain exposure with no lockfile protection.
+
+All hooks are now `repo: local`. Ruff and uv are run from the versions pinned in `uv.lock`, and the file-hygiene checks (whitespace, end-of-file, YAML/TOML validity, conflict markers, large files, private keys, protected branch, Conventional Commit messages) are implemented in `hooks/checks.py` with unit tests. The only third-party code involved is what is already locked as a dev dependency (including `pyyaml` for the YAML check). Trade-off: we now maintain about 150 lines of hook code, and the private-key check is a simple pattern match rather than a maintained rule set; CI's gitleaks job remains the thorough secret scan.
+
 ### Deliberate choices
 
 - **`pip-audit` is report-only** (`continue-on-error`) until the advisories against the currently pinned `cryptography` and `pytest` versions are resolved. Making it blocking now would fail every PR for reasons unrelated to the change. It should be made blocking once the pins are updated.
