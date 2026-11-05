@@ -26,17 +26,25 @@ jobs:
           uvx pip-audit -r "$RUNNER_TEMP/requirements.txt" --no-deps --disable-pip
 
   codeql:
-    name: CodeQL
+    name: CodeQL (${{ matrix.language }})
     runs-on: ubuntu-latest
     permissions:
       contents: read
       security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        # Both are interpreted languages, so no build step is needed.
+        language: [python, javascript-typescript]
     steps:
       - uses: actions/checkout@v4
       - uses: github/codeql-action/init@v3
         with:
-          languages: python
+          languages: ${{ matrix.language }}
+          config-file: ./.github/codeql/codeql-config.yml
       - uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
 
   secret-scan:
     name: Secret scan

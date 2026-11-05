@@ -118,7 +118,7 @@ exactly what is in `uv.lock`.
 | Job | What it does |
 | --- | --- |
 | Dependency audit | `pip-audit` over the locked runtime dependencies. **Report-only** (`continue-on-error`) until currently known advisories are resolved; remove that line to make it blocking |
-| CodeQL | static analysis for Python |
+| CodeQL | static analysis for Python and JavaScript/TypeScript (vendored code excluded) |
 | Secret scan | gitleaks over the full history |
 
 ### Dependabot
