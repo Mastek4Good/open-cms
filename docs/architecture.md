@@ -74,7 +74,7 @@ graph LR
 ```
 ├── main.py                        Entry point
 ├── config.py                      App configuration (Dev/Prod)
-├── requirements.txt               Python dependencies (pinned)
+├── pyproject.toml / uv.lock       Dependencies (uv) and tool config
 ├── Dockerfile                     Local development container
 ├── docker-compose.yml             Local development orchestration
 ├── scripts/                       Backup, restore, retention, key generation

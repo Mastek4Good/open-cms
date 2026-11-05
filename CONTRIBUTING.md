@@ -80,10 +80,12 @@ Note: There are ways to reduce the number of commands required (for example by c
 The repo uses [pre-commit](https://pre-commit.com) to run the same checks locally that CI runs. Set it up once after cloning:
 
 ```
-python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements-dev.txt
+uv sync   # creates .venv from uv.lock, including dev tools
 .venv/bin/pre-commit install
+
 ```
+
+Dependencies live in `pyproject.toml` (runtime in `dependencies`, tooling in the `dev` group). After editing them run `uv lock`, or use `uv add <pkg>` / `uv add --dev <pkg>`, and commit `uv.lock`.
 
 - **On commit:** ruff lint (with autofix) and format, whitespace/EOF/YAML/TOML checks, private-key detection, a large-file check, and a block on committing directly to `main`.
 - **On commit message:** must follow [Conventional Commits](https://www.conventionalcommits.org) (`feat:`, `fix:`, `docs:`, `test:`, `chore:` ...).

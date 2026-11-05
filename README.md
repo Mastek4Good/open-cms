@@ -48,8 +48,7 @@ Pick up an [open issue](https://github.com/Mastek4Good/open-cms/issues) and see 
 ## Run locally
 
 ```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
+uv sync --no-dev   # installs into .venv from uv.lock (drop --no-dev to include test/lint tools)
 .venv/bin/python main.py
 ```
 
