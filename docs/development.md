@@ -14,6 +14,8 @@ raising a pull request, see [CONTRIBUTING.md](../CONTRIBUTING.md).
 | Remote gates | GitHub Actions | `.github/workflows/` |
 | Dependency updates | Dependabot | `.github/dependabot.yml` |
 
+The reasoning behind these choices is recorded in [ADR-010](adrs/010-uv-and-automated-quality-gates.md).
+
 The same checks run locally (pre-commit) and remotely (CI), so a clean local
 run should mean a green pull request.
 
