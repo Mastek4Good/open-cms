@@ -10,6 +10,7 @@ raising a pull request, see [CONTRIBUTING.md](../CONTRIBUTING.md).
 | Dependencies and Python version | [uv](https://docs.astral.sh/uv/) | `pyproject.toml`, `uv.lock`, `.python-version` |
 | Lint and format | [ruff](https://docs.astral.sh/ruff/) | `[tool.ruff]` in `pyproject.toml` |
 | Tests | pytest | `[tool.pytest.ini_options]` in `pyproject.toml` |
+| Accessibility (WCAG) | Playwright + axe-core, Lighthouse | `tests_a11y/`, `.github/workflows/accessibility.yml` |
 | Local gates | [pre-commit](https://pre-commit.com) | `.pre-commit-config.yaml` |
 | Remote gates | GitHub Actions | `.github/workflows/` |
 | Dependency updates | Dependabot | `.github/dependabot.yml` |
@@ -36,6 +37,39 @@ Run everything through uv: `uv run pytest`, `uv run ruff check .`,
 `uv run python main.py`. `uv run` uses the project's `.venv` and first brings it
 in line with `uv.lock`, so you never need to activate the environment by hand.
 (Activating `.venv` and calling tools directly still works if you prefer.)
+
+## Accessibility checks (WCAG)
+
+`tests_a11y/` drives a real Chromium (Playwright) against a running copy of the
+app, signs in as the shared demo account, and scans each main page with
+[axe-core](https://github.com/dequelabs/axe-core) against **WCAG 2.2 level A and
+AA**. It covers the login and sign-up pages plus the case list, dashboard, new
+case, review, follow-ups, reports, a case detail page, MFA status, invite codes
+and users. Any violation fails the test and prints the rule, impact and element.
+
+These tests are slower and need a browser, so they are **not** part of the default
+`pytest` run (`testpaths` is `tests/`). Their dependencies live in the `a11y`
+dependency group.
+
+```bash
+uv sync --group a11y                      # once: adds playwright + axe
+uv run playwright install --with-deps chromium   # once: browser (needs sudo on Linux)
+uv run pytest tests_a11y                  # run the scan
+```
+
+To cover a new page, add its path to `PUBLIC_PAGES` or `SIGNED_IN_PAGES` in
+`tests_a11y/test_axe.py`.
+
+CI runs this as the blocking **WCAG 2.2 AA scan** job. A second job runs
+**Lighthouse** (accessibility category) on the public pages and uploads the HTML
+reports as an artifact; it is report-only because it uses the same axe engine and
+cannot sign in. See [ADR-011](adrs/011-automated-accessibility-scanning.md).
+
+Automated scanning finds only a portion of real accessibility problems (roughly a
+third). It does not replace keyboard-only navigation, screen-reader testing and
+zoom/reflow checks, which should be done by hand for new or changed UI. Colour
+contrast needs care: the brand palette is defined in `app/templates/base.html` and
+text on it must keep a 4.5:1 ratio.
 
 ## Managing dependencies
 
@@ -110,6 +144,13 @@ code; add an ignore only with a reason.
 | Docker build | builds the development image (does not push) |
 | Conventional PR title | PR titles must follow Conventional Commits |
 
+### `accessibility.yml` — every pull request and push to `main`
+
+| Job | What it does |
+| --- | --- |
+| WCAG 2.2 AA scan | Playwright + axe-core over the main pages (blocking) |
+| Lighthouse report | accessibility score and HTML report for the public pages (report-only) |
+
 `--locked` makes CI fail rather than silently re-resolve, so CI always tests
 exactly what is in `uv.lock`.
 
@@ -130,7 +171,7 @@ GitHub Actions; monthly for the Docker base image. Dependabot updates
 ### Suggested branch protection
 
 In repository settings, require the CI jobs (Lockfile, Lint & format, Tests,
-Docker build, PR title) to pass before merging to `main`.
+Docker build, PR title, WCAG scan) to pass before merging to `main`.
 
 ## Docker
 

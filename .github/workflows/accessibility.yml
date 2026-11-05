@@ -1,0 +1,67 @@
+name: Accessibility
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: a11y-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  axe:
+    name: WCAG 2.2 AA scan (axe-core)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.13"
+      - run: uv sync --locked --group a11y
+      - run: uv run playwright install --with-deps chromium
+      - run: uv run pytest tests_a11y -q
+
+  lighthouse:
+    name: Lighthouse accessibility report
+    runs-on: ubuntu-latest
+    # Report-only: the axe job above is the blocking gate. Lighthouse covers the
+    # public pages and gives a score plus the full HTML report as an artifact.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.13"
+      - run: uv sync --locked --no-dev
+      - name: Start the app
+        env:
+          DATABASE_URL: sqlite:////tmp/lighthouse.db
+        run: |
+          nohup uv run python -c "from app import create_app; create_app().run(port=5001, use_reloader=False)" > app.log 2>&1 &
+          for _ in $(seq 1 30); do curl -fs http://127.0.0.1:5001/login >/dev/null && exit 0; sleep 1; done
+          cat app.log; exit 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Run Lighthouse
+        run: |
+          mkdir -p lighthouse
+          for page in login sign-up; do
+            npx --yes lighthouse@12.6.1 "http://127.0.0.1:5001/$page" \
+              --only-categories=accessibility \
+              --chrome-flags="--headless=new --no-sandbox" \
+              --output=json --output=html \
+              --output-path="lighthouse/$page"
+            echo "$page accessibility score: $(jq '.categories.accessibility.score' "lighthouse/$page.report.json")"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-reports
+          path: lighthouse/

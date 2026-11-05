@@ -159,4 +159,6 @@ uv run ruff format --check .  # formatting
 uv run pre-commit install     # once: run these checks automatically on commit/push
 ```
 
+Accessibility is checked too: CI scans the main pages against WCAG 2.2 AA with axe-core and reports a Lighthouse score. To run the scan locally, see [Accessibility checks](docs/development.md#accessibility-checks-wcag).
+
 Pre-commit runs ruff, file hygiene checks and a Conventional Commits message check on every commit, and the test suite on every push. GitHub Actions runs the same checks on every pull request, plus a lockfile check, Docker build, dependency audit, CodeQL and secret scanning. See [docs/development.md](docs/development.md) for details, including how to add or upgrade dependencies (`uv add`, `uv lock --upgrade`).

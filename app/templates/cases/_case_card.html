@@ -25,7 +25,7 @@
                 {% if case.current_situation %} &middot; {{ case.current_situation|replace('_', ' ') }}{% endif %}
             </p>
         </div>
-        <span class="text-xs text-gray-400 whitespace-nowrap ml-3">
+        <span class="text-xs text-gray-500 whitespace-nowrap ml-3">
             <time class="local-date" datetime="{{ case.created_at.isoformat() }}Z">{{ case.created_at.strftime('%d %b %Y') }}</time>
         </span>
     </div>

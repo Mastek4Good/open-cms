@@ -77,6 +77,7 @@ graph LR
 ├── pyproject.toml / uv.lock       Dependencies (uv) and tool config
 ├── .pre-commit-config.yaml        Local commit/push quality gates
 ├── .github/                       CI and security workflows, Dependabot
+├── tests_a11y/                    Browser-based WCAG scan (Playwright + axe-core)
 ├── Dockerfile                     Local development container
 ├── docker-compose.yml             Local development orchestration
 ├── scripts/                       Backup, restore, retention, key generation
@@ -628,6 +629,7 @@ Detailed rationale for significant decisions is documented in `/docs/adrs/`:
 - [ADR-008: Security Controls for Production](adrs/008-security-controls-for-production.md) — the eleven pre-production blockers and how each is closed
 - [ADR-009: Shared Demo Account](adrs/009-shared-demo-account.md) — any-code MFA and a nightly data reset for the demo login
 - [ADR-010: uv and Automated Quality Gates](adrs/010-uv-and-automated-quality-gates.md) — locked dependencies, ruff, pre-commit and CI
+- [ADR-011: Automated Accessibility Scanning](adrs/011-automated-accessibility-scanning.md) — axe-core WCAG 2.2 AA gate, Lighthouse report
 
 ## Future Considerations
 
