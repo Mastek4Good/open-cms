@@ -137,7 +137,7 @@ exactly what is in `uv.lock`.
 | --- | --- |
 | Dependency audit | `pip-audit` over the locked runtime dependencies. **Report-only** (`continue-on-error`) until currently known advisories are resolved; remove that line to make it blocking |
 | CodeQL | static analysis for Python and JavaScript/TypeScript (vendored code excluded) |
-| Secret scan | gitleaks over the full history |
+| Secret scan | the gitleaks CLI (MIT) over the full git history, version pinned and checksum verified. Known false positives are listed by fingerprint in `.gitleaksignore` |
 
 ### Dependabot
 
