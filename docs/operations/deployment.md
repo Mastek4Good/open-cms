@@ -26,10 +26,16 @@ link it here.
 
 ### 1. A supervised long-running process
 
-The app is a WSGI application served by gunicorn:
+Install the locked runtime dependencies (no dev tools) with
+[uv](https://docs.astral.sh/uv/), then run the app as a WSGI application under
+gunicorn:
 
 ```bash
-gunicorn --bind 127.0.0.1:5001 --workers 2 --timeout 120 --preload main:app
+uv sync --locked --no-dev   # reproduces uv.lock exactly into .venv
+```
+
+```bash
+.venv/bin/gunicorn --bind 127.0.0.1:5001 --workers 2 --timeout 120 --preload main:app
 ```
 
 The host must restart it on failure and on reboot — a systemd unit, a platform

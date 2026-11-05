@@ -1,6 +1,6 @@
 # Contributing to open-cms
 
-open-cms is an open source case management system. Its first user is Simon on the Streets' outreach team. To run the app and its tests, see the [README](README.md).
+open-cms is an open source case management system. Its first user is Simon on the Streets' outreach team. To run the app and its tests, see the [README](README.md). The full dependency, hook and CI workflow is in [docs/development.md](docs/development.md).
 
 Work is tracked as [GitHub issues](https://github.com/Mastek4Good/open-cms/issues). Before you start, comment on the issue to say you are taking it.
 
@@ -90,10 +90,13 @@ Dependencies live in `pyproject.toml` (runtime in `dependencies`, tooling in the
 - **On commit:** ruff lint (with autofix) and format, whitespace/EOF/YAML/TOML checks, private-key detection, a large-file check, and a block on committing directly to `main`.
 - **On commit message:** must follow [Conventional Commits](https://www.conventionalcommits.org) (`feat:`, `fix:`, `docs:`, `test:`, `chore:` ...).
 - **On push:** the full pytest suite.
+- `uv-lock` also runs on commit, so `uv.lock` can never drift from `pyproject.toml`.
 
-Run everything manually with `.venv/bin/pre-commit run --all-files`, or just the linter with `.venv/bin/ruff check . && .venv/bin/ruff format --check .`.
+Run everything manually with `.venv/bin/pre-commit run --all-files`, or just the linter with `.venv/bin/ruff check . && .venv/bin/ruff format --check .`. If a hook reformats files, the commit stops: `git add` the changes and commit again.
 
-GitHub Actions (`.github/workflows`) re-runs lint, format, tests and a Docker build on every pull request, plus dependency audit, CodeQL and secret scanning. PR titles must also be Conventional Commits. Dependabot opens weekly update PRs.
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) first. To add a dependency use `uv add <pkg>` (or `uv add --dev <pkg>`) and commit both `pyproject.toml` and `uv.lock`.
+
+GitHub Actions (`.github/workflows`) re-runs lint, format, tests, a lockfile check and a Docker build on every pull request, plus dependency audit, CodeQL and secret scanning. PR titles must also be Conventional Commits. Dependabot opens weekly update PRs. See [docs/development.md](docs/development.md).
 
 ### Pull Request
 

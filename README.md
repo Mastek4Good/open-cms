@@ -28,6 +28,7 @@ Please refer to `docs/architecture.md` for the full system architecture.
 ## Documentation
 
 - [MVP status](docs/status.md)
+- [Development workflow](docs/development.md) — uv dependencies, pre-commit hooks, CI
 - [Frontline worker guide](docs/user-guides/frontline-worker.md)
 - [Admin guide](docs/user-guides/admin.md)
 - [Architecture](docs/architecture.md)
@@ -43,9 +44,11 @@ Please refer to `docs/architecture.md` for the full system architecture.
 
 ## Contributing
 
-Pick up an [open issue](https://github.com/Mastek4Good/open-cms/issues) and see [CONTRIBUTING.md](CONTRIBUTING.md) for how to fork the repo and raise a pull request.
+Pick up an [open issue](https://github.com/Mastek4Good/open-cms/issues) and see [CONTRIBUTING.md](CONTRIBUTING.md) for how to fork the repo and raise a pull request, and [docs/development.md](docs/development.md) for the dependency, linting and CI workflow.
 
 ## Run locally
+
+Requires [uv](https://docs.astral.sh/uv/getting-started/installation/), which also installs the right Python (3.13) if needed. Dependencies are declared in `pyproject.toml` and locked in `uv.lock`.
 
 ```bash
 uv sync --no-dev   # installs into .venv from uv.lock (drop --no-dev to include test/lint tools)
@@ -146,8 +149,14 @@ Generate production secrets with:
 .venv/bin/python -m scripts.retention --apply                    # apply retention
 ```
 
-## Test
+## Test and code quality
 
 ```bash
-.venv/bin/python -m pytest -q
+uv sync                          # once: installs runtime + dev tools into .venv
+.venv/bin/pytest -q              # tests
+.venv/bin/ruff check .           # lint
+.venv/bin/ruff format --check .  # formatting
+.venv/bin/pre-commit install     # once: run these checks automatically on commit/push
 ```
+
+Pre-commit runs ruff, file hygiene checks and a Conventional Commits message check on every commit, and the test suite on every push. GitHub Actions runs the same checks on every pull request, plus a lockfile check, Docker build, dependency audit, CodeQL and secret scanning. See [docs/development.md](docs/development.md) for details, including how to add or upgrade dependencies (`uv add`, `uv lock --upgrade`).

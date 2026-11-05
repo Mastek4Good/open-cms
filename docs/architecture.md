@@ -75,6 +75,8 @@ graph LR
 ├── main.py                        Entry point
 ├── config.py                      App configuration (Dev/Prod)
 ├── pyproject.toml / uv.lock       Dependencies (uv) and tool config
+├── .pre-commit-config.yaml        Local commit/push quality gates
+├── .github/                       CI and security workflows, Dependabot
 ├── Dockerfile                     Local development container
 ├── docker-compose.yml             Local development orchestration
 ├── scripts/                       Backup, restore, retention, key generation
@@ -121,6 +123,7 @@ graph LR
 │       └── Dockerfile             whisper.cpp server container
 ├── docs/
 │   ├── architecture.md            This file
+│   ├── development.md             uv, pre-commit and CI workflow
 │   └── adrs/                      Architecture Decision Records
 │       ├── 001-what3words-integration.md
 │       ├── 002-audit-trail.md
