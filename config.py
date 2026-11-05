@@ -66,7 +66,7 @@ class Config:
     # --- Field-level encryption (blocker 5) -------------------------------
     # Comma-separated Fernet keys. The first key encrypts; every key is tried
     # when decrypting, which is what makes key rotation possible.
-    # Generate with: python -m scripts.generate_keys
+    # Generate with: uv run python -m scripts.generate_keys
     FIELD_ENCRYPTION_KEYS = os.environ.get("FIELD_ENCRYPTION_KEYS", "")
 
     # --- Multi-factor authentication (blocker 8) --------------------------

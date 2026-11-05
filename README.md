@@ -52,7 +52,7 @@ Requires [uv](https://docs.astral.sh/uv/getting-started/installation/), which al
 
 ```bash
 uv sync --no-dev   # installs into .venv from uv.lock (drop --no-dev to include test/lint tools)
-.venv/bin/python main.py
+uv run python main.py
 ```
 
 Open `http://localhost:5001`.
@@ -71,13 +71,13 @@ Environment variables can override the local defaults:
 ```bash
 DEMO_ACCOUNT_EMAIL=demo@example.org \
 DEMO_ACCOUNT_PASSWORD='replace-with-local-password' \
-.venv/bin/python main.py
+uv run python main.py
 ```
 
 To put the demo account back to just the demo cases — deleting anything it created — run:
 
 ```bash
-.venv/bin/python -m scripts.reset_demo --apply
+uv run python -m scripts.reset_demo --apply
 ```
 
 A demo deployment can do this automatically every night with `DEMO_RESET_TIME=03:00`. See [ADR-009](docs/adrs/009-shared-demo-account.md) and [docs/operations/deployment.md](docs/operations/deployment.md#demo-deployments).
@@ -85,7 +85,7 @@ A demo deployment can do this automatically every night with `DEMO_RESET_TIME=03
 To start with an empty local case list, run with:
 
 ```bash
-DEMO_CASES_ENABLED=false .venv/bin/python main.py
+DEMO_CASES_ENABLED=false uv run python main.py
 ```
 
 ## Run with Docker (local development)
@@ -124,7 +124,7 @@ The controls protecting the system — login throttling, mandatory MFA for admin
 Generate production secrets with:
 
 ```bash
-.venv/bin/python -m scripts.generate_keys
+uv run python -m scripts.generate_keys
 ```
 
 ## Usage
@@ -142,21 +142,21 @@ Generate production secrets with:
 ## Operational scripts
 
 ```bash
-.venv/bin/python -m scripts.generate_keys                        # production secrets
-.venv/bin/python -m scripts.backup --destination /var/backups    # encrypted backup
-.venv/bin/python -m scripts.restore --archive <file> --target <dir>
-.venv/bin/python -m scripts.retention                            # dry run
-.venv/bin/python -m scripts.retention --apply                    # apply retention
+uv run python -m scripts.generate_keys                        # production secrets
+uv run python -m scripts.backup --destination /var/backups    # encrypted backup
+uv run python -m scripts.restore --archive <file> --target <dir>
+uv run python -m scripts.retention                            # dry run
+uv run python -m scripts.retention --apply                    # apply retention
 ```
 
 ## Test and code quality
 
 ```bash
 uv sync                          # once: installs runtime + dev tools into .venv
-.venv/bin/pytest -q              # tests
-.venv/bin/ruff check .           # lint
-.venv/bin/ruff format --check .  # formatting
-.venv/bin/pre-commit install     # once: run these checks automatically on commit/push
+uv run pytest -q              # tests
+uv run ruff check .           # lint
+uv run ruff format --check .  # formatting
+uv run pre-commit install     # once: run these checks automatically on commit/push
 ```
 
 Pre-commit runs ruff, file hygiene checks and a Conventional Commits message check on every commit, and the test suite on every push. GitHub Actions runs the same checks on every pull request, plus a lockfile check, Docker build, dependency audit, CodeQL and secret scanning. See [docs/development.md](docs/development.md) for details, including how to add or upgrade dependencies (`uv add`, `uv lock --upgrade`).

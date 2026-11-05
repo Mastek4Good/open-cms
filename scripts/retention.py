@@ -1,7 +1,7 @@
 """Apply the data retention policy.
 
-    python -m scripts.retention          # report what would be destroyed
-    python -m scripts.retention --apply  # destroy it
+    uv run python -m scripts.retention          # report what would be destroyed
+    uv run python -m scripts.retention --apply  # destroy it
 
 Blocker 11. Archived cases previously stayed on disk forever. This job
 permanently erases archived cases past their retention period, and prunes

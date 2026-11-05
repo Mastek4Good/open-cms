@@ -1,6 +1,6 @@
 """Restore a backup produced by scripts.backup.
 
-    python -m scripts.restore --archive /var/backups/quick-capture/....enc \
+    uv run python -m scripts.restore --archive /var/backups/quick-capture/....enc \
         --target /srv/quick-capture
 
 Restores into a target directory as `database.db` and `uploads/`. The target

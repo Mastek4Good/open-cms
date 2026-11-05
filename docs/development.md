@@ -25,16 +25,17 @@ Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then:
 
 ```bash
 uv sync                      # creates .venv from uv.lock, runtime + dev tools
-.venv/bin/pre-commit install # installs the git hooks (commit, commit-msg, pre-push)
+uv run pre-commit install # installs the git hooks (commit, commit-msg, pre-push)
 ```
 
 uv reads `.python-version` and downloads Python 3.13 if you do not have it.
 `uv sync --no-dev` installs runtime dependencies only (what the Dockerfile and a
 production host use).
 
-You can activate `.venv` as usual, or prefix commands with `uv run`
-(for example `uv run pytest`). Every `.venv/bin/python ...` command in the docs
-works unchanged.
+Run everything through uv: `uv run pytest`, `uv run ruff check .`,
+`uv run python main.py`. `uv run` uses the project's `.venv` and first brings it
+in line with `uv.lock`, so you never need to activate the environment by hand.
+(Activating `.venv` and calling tools directly still works if you prefer.)
 
 ## Managing dependencies
 
@@ -74,7 +75,7 @@ If a hook fixes files, the commit is aborted. Review the changes, `git add`
 them and commit again. Run all hooks on demand with:
 
 ```bash
-.venv/bin/pre-commit run --all-files
+uv run pre-commit run --all-files
 ```
 
 Hooks can be bypassed with `--no-verify`, but CI runs the same checks and will
@@ -83,10 +84,10 @@ fail the pull request.
 ### Running tools directly
 
 ```bash
-.venv/bin/ruff check .            # lint (add --fix to autofix)
-.venv/bin/ruff format .           # format (--check to verify only)
-.venv/bin/pytest -q               # tests
-.venv/bin/pre-commit autoupdate   # bump hook versions
+uv run ruff check .            # lint (add --fix to autofix)
+uv run ruff format .           # format (--check to verify only)
+uv run pytest -q               # tests
+uv run pre-commit autoupdate   # bump hook versions
 ```
 
 ### Ruff

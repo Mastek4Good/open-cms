@@ -1,6 +1,6 @@
 """Encrypted backup of the database and uploaded files.
 
-    python -m scripts.backup --destination /var/backups/quick-capture
+    uv run python -m scripts.backup --destination /var/backups/quick-capture
 
 Blocker 4. There was no backup at all: the database and every voice note lived
 in one directory, one accident away from total loss.
@@ -144,7 +144,7 @@ def main(argv=None) -> int:
         print(
             "BACKUP_ENCRYPTION_KEY is not set. Refusing to write an unencrypted "
             "backup of special-category data. Generate a key with "
-            "'python -m scripts.generate_keys', or pass --allow-unencrypted for "
+            "'uv run python -m scripts.generate_keys', or pass --allow-unencrypted for "
             "local testing only.",
             file=sys.stderr,
         )

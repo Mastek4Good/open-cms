@@ -31,12 +31,14 @@ Install the locked runtime dependencies (no dev tools) with
 gunicorn:
 
 ```bash
-uv sync --locked --no-dev   # reproduces uv.lock exactly into .venv
+uv sync --locked --no-dev   # reproduces uv.lock exactly into .venv (optional: `uv run` does this too)
 ```
 
 ```bash
-.venv/bin/gunicorn --bind 127.0.0.1:5001 --workers 2 --timeout 120 --preload main:app
+uv run --no-dev --locked gunicorn --bind 127.0.0.1:5001 --workers 2 --timeout 120 --preload main:app
 ```
+
+In a systemd unit or other process manager, use the full path to `uv` in `ExecStart`.
 
 The host must restart it on failure and on reboot — a systemd unit, a platform
 process manager, or an equivalent. Bind to localhost and put a reverse proxy in
@@ -88,7 +90,7 @@ application host, with a restore drill at least quarterly.
 
 ### 6. A scheduled retention job
 
-See [data-retention.md](data-retention.md). `python -m scripts.retention --apply`
+See [data-retention.md](data-retention.md). `uv run python -m scripts.retention --apply`
 on a daily or weekly schedule.
 
 ### 7. Log handling
@@ -102,7 +104,7 @@ and email addresses.
 Generate the secrets first:
 
 ```bash
-python -m scripts.generate_keys
+uv run python -m scripts.generate_keys
 ```
 
 ```bash
@@ -154,7 +156,7 @@ account enrolled and lets its code prompt accept any 6 digits, so it can be
 handed to several people. `DEMO_RESET_TIME` (e.g. `03:00`) then destroys
 every case the demo account created, and restores the seeded demo cases,
 once a night: the first request after that time does it, so no cron entry
-is needed, and a visitor the next morning always starts from fresh data. `python -m scripts.reset_demo --apply`
+is needed, and a visitor the next morning always starts from fresh data. `uv run python -m scripts.reset_demo --apply`
 does the same on demand. Cases created by other accounts are never touched.
 
 ## The configuration guard

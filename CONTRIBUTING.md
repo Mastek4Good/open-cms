@@ -81,7 +81,7 @@ The repo uses [pre-commit](https://pre-commit.com) to run the same checks locall
 
 ```
 uv sync   # creates .venv from uv.lock, including dev tools
-.venv/bin/pre-commit install
+uv run pre-commit install
 
 ```
 
@@ -92,7 +92,7 @@ Dependencies live in `pyproject.toml` (runtime in `dependencies`, tooling in the
 - **On push:** the full pytest suite.
 - `uv-lock` also runs on commit, so `uv.lock` can never drift from `pyproject.toml`.
 
-Run everything manually with `.venv/bin/pre-commit run --all-files`, or just the linter with `.venv/bin/ruff check . && .venv/bin/ruff format --check .`. If a hook reformats files, the commit stops: `git add` the changes and commit again.
+Run everything manually with `uv run pre-commit run --all-files`, or just the linter with `uv run ruff check . && uv run ruff format --check .`. If a hook reformats files, the commit stops: `git add` the changes and commit again.
 
 Install [uv](https://docs.astral.sh/uv/getting-started/installation/) first. To add a dependency use `uv add <pkg>` (or `uv add --dev <pkg>`) and commit both `pyproject.toml` and `uv.lock`.
 
