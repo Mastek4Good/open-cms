@@ -50,7 +50,7 @@ jobs:
           enable-cache: true
           python-version: ${{ matrix.python-version }}
       - run: uv sync --locked
-      - run: uv run pytest -q --maxfail=5
+      - run: uv run pytest -q
 
   docker-build:
     name: Docker build
