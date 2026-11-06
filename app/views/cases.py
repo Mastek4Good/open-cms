@@ -23,7 +23,7 @@ from app.models.case import (
 from app.models.case_attachment import AttachmentKind
 from app.models.case_interaction import InteractionTagType
 from app.services.access_log_service import AccessAction, AccessLogService
-from app.services.case_service import CaseService
+from app.services.case_service import NOTE_TOO_LONG_ERROR, CaseService
 from app.services.retention_service import REASON_ERASURE_REQUEST, RetentionService
 from app.views import cases_bp
 from app.views.auth import admin_required
@@ -356,7 +356,9 @@ def add_note(case_id):
     content = request.form.get("content", "").strip()
     voice_transcript = request.form.get("voice_transcript", "").strip()
 
-    if voice_transcript:
+    if case_service.note_too_long(content, voice_transcript):
+        flash(NOTE_TOO_LONG_ERROR, category="error")
+    elif voice_transcript:
         # Voice transcript takes precedence — save as transcription note only
         from app.models.case_note import NoteSource
 

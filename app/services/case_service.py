@@ -23,7 +23,7 @@ from app.models.user import User
 from app.repositories.case_note_repository import CaseNoteRepository
 from app.repositories.case_repository import CaseRepository
 from app.services.audit_service import AuditService
-from app.services.html_service import sanitize_html
+from app.services.html_service import has_visible_text, sanitize_html
 from app.services.identifier_service import IdentifierService
 from app.services.transcription_client import TranscriptionClient
 
@@ -32,6 +32,11 @@ logger = logging.getLogger(__name__)
 ALLOWED_AUDIO_EXTENSIONS = {"webm", "ogg", "mp3", "wav", "m4a"}
 ALLOWED_ATTACHMENT_EXTENSIONS = {"pdf", "png", "jpg", "jpeg", "doc", "docx", "txt"}
 ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg"}
+
+# Upper bound on free-text note content (characters). Generous for a typed or
+# transcribed note, but bounds the work done on any one request.
+MAX_NOTE_LENGTH = 20_000
+NOTE_TOO_LONG_ERROR = f"Notes can be at most {MAX_NOTE_LENGTH:,} characters."
 
 
 class CaseService:
@@ -107,6 +112,9 @@ class CaseService:
         if consent_image and consent_image.filename:
             if self._extension(consent_image.filename) not in ALLOWED_IMAGE_EXTENSIONS:
                 return None, "The consent and risk image must be a PNG or JPEG."
+
+        if self.note_too_long(notes_content, voice_transcript):
+            return None, NOTE_TOO_LONG_ERROR
 
         calculated_age = self._calculate_age(date_of_birth)
         if calculated_age is not None:
@@ -339,6 +347,9 @@ class CaseService:
         if not content or not content.strip():
             return None, "Note content cannot be empty"
 
+        if self.note_too_long(content):
+            return None, NOTE_TOO_LONG_ERROR
+
         updated = self.note_repo.update(note, content=sanitize_html(content))
 
         self.audit_service.log_update(
@@ -397,6 +408,9 @@ class CaseService:
         location_lat: float | None = None,
         location_lng: float | None = None,
     ) -> tuple[CaseInteraction | None, str | None]:
+        if self.note_too_long(note_content):
+            return None, NOTE_TOO_LONG_ERROR
+
         tag_types = tag_types or []
         valid_tags = [t for t in tag_types if t in InteractionTagType.CHOICES]
         clean_note = sanitize_html(note_content or "")
@@ -839,13 +853,12 @@ class CaseService:
         Older versions of the app used a rich-text editor that could submit
         empty HTML tags; keep this defensive check for existing clients.
         """
-        import re
+        return has_visible_text(html_content)
 
-        # Strip all HTML tags
-        text = re.sub(r"<[^>]+>", "", html_content)
-        # Strip whitespace and common empty placeholders
-        text = text.replace("\n", "").replace("\r", "").strip()
-        return len(text) > 0
+    @staticmethod
+    def note_too_long(*texts: str | None) -> bool:
+        """True if any of the given free-text note values exceeds MAX_NOTE_LENGTH."""
+        return any(text is not None and len(text) > MAX_NOTE_LENGTH for text in texts)
 
     def _calculate_age(self, date_of_birth: str | None) -> int | None:
         if not date_of_birth:
