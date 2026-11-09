@@ -41,6 +41,7 @@ Please refer to `docs/architecture.md` for the full system architecture.
 - [Backups and restore](docs/operations/backups.md)
 - [Field-level encryption](docs/operations/encryption.md) — including key rotation
 - [Data retention and erasure](docs/operations/data-retention.md)
+- [Running costs](docs/operations/running-costs.md) — what the project costs, and what could start costing
 
 ## Contributing
 
