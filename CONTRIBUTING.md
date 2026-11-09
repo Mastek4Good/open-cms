@@ -1,6 +1,6 @@
 # Contributing to open-cms
 
-open-cms is an open source case management system. Its first user is Simon on the Streets' outreach team. To run the app and its tests, see the [README](README.md).
+open-cms is an open source case management system. Its first user is Simon on the Streets' outreach team. To run the app and its tests, see the [README](README.md). The full dependency, hook and CI workflow is in [docs/development.md](docs/development.md).
 
 Work is tracked as [GitHub issues](https://github.com/Mastek4Good/open-cms/issues). Before you start, comment on the issue to say you are taking it.
 
@@ -74,6 +74,29 @@ git push origin AdamDev
 ```
 
 Note: There are ways to reduce the number of commands required (for example by configuring an _upstream_ branch), but for a beginner it is often better to be explicit. The above commands pushed the changes to a branch named AdamDev in my fork (and created this branch to do so, if necessary). It is recommended not to merge this to the main branch in your own fork, but instead navigate on github to the Mastek4Good/Open-cms repo to create you pull request. This maintains a cleaner git history.
+
+### Code quality checks
+
+The repo uses [pre-commit](https://pre-commit.com) to run the same checks locally that CI runs. All hooks are defined in this repo (ruff and uv from the lockfile, plus `hooks/checks.py`); none are downloaded from third-party hook repositories. Set it up once after cloning:
+
+```
+uv sync   # creates .venv from uv.lock, including dev tools
+uv run pre-commit install
+
+```
+
+Dependencies live in `pyproject.toml` (runtime in `dependencies`, tooling in the `dev` group). After editing them run `uv lock`, or use `uv add <pkg>` / `uv add --dev <pkg>`, and commit `uv.lock`.
+
+- **On commit:** ruff lint (with autofix) and format, whitespace/EOF/YAML/TOML checks, private-key detection, a large-file check, and a block on committing directly to `main`.
+- **On commit message:** must follow [Conventional Commits](https://www.conventionalcommits.org) (`feat:`, `fix:`, `docs:`, `test:`, `chore:` ...).
+- **On push:** the full pytest suite.
+- `uv-lock` also runs on commit, so `uv.lock` can never drift from `pyproject.toml`.
+
+Run everything manually with `uv run pre-commit run --all-files`, or just the linter with `uv run ruff check . && uv run ruff format --check .`. If a hook reformats files, the commit stops: `git add` the changes and commit again.
+
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) first. To add a dependency use `uv add <pkg>` (or `uv add --dev <pkg>`) and commit both `pyproject.toml` and `uv.lock`.
+
+GitHub Actions (`.github/workflows`) re-runs lint, format, tests, a lockfile check and a Docker build on every pull request, plus dependency audit, CodeQL and secret scanning. PR titles must also be Conventional Commits. Dependabot opens weekly update PRs. See [docs/development.md](docs/development.md).
 
 ### Pull Request
 

@@ -1,6 +1,5 @@
 import logging
 import os
-from typing import Optional
 
 import requests
 from flask import current_app
@@ -20,15 +19,13 @@ class TranscriptionClient:
 
     @property
     def base_url(self) -> str:
-        return current_app.config.get(
-            "TRANSCRIPTION_URL", "http://transcriber:8080"
-        )
+        return current_app.config.get("TRANSCRIPTION_URL", "http://transcriber:8080")
 
     @property
     def inference_url(self) -> str:
         return f"{self.base_url}/inference"
 
-    def transcribe(self, audio_file_path: str) -> Optional[str]:
+    def transcribe(self, audio_file_path: str) -> str | None:
         """Transcribe an audio file.
 
         Args:
@@ -59,8 +56,7 @@ class TranscriptionClient:
 
             if response.status_code != 200:
                 logger.error(
-                    f"Transcription service returned {response.status_code}: "
-                    f"{response.text}"
+                    f"Transcription service returned {response.status_code}: {response.text}"
                 )
                 return None
 
@@ -74,9 +70,7 @@ class TranscriptionClient:
             return text
 
         except requests.ConnectionError:
-            logger.error(
-                f"Cannot connect to transcription service at {self.inference_url}"
-            )
+            logger.error(f"Cannot connect to transcription service at {self.inference_url}")
             return None
         except requests.Timeout:
             logger.error("Transcription service timed out")

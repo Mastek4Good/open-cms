@@ -1,0 +1,70 @@
+[project]
+name = "open-cms"
+version = "0.1.0"
+description = "Case management app for outreach and support teams"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "flask==3.1.1",
+    "flask-sqlalchemy==3.1.1",
+    "flask-login==0.6.3",
+    "werkzeug==3.1.3",
+    "sqlalchemy==2.0.36",
+    "gunicorn==23.0.0",
+    "requests==2.32.3",
+    "bleach==6.2.0",
+    "cryptography==44.0.0",
+    "pyotp==2.9.0",
+    "qrcode==8.0",
+    # Timezone data for zoneinfo; slim images ship without it.
+    "tzdata==2025.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==8.3.4",
+    "ruff==0.17.3",
+    "pre-commit==4.7.0",
+    "pip-audit==2.10.1",
+    "pyyaml==6.0.3",
+]
+
+[tool.uv]
+# An application, not a library: install dependencies only, not the project itself.
+package = false
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+extend-exclude = ["app/static/vendor"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",  # pycodestyle
+    "F",       # pyflakes
+    "I",       # isort
+    "B",       # bugbear
+    "UP",      # pyupgrade
+    "S",       # bandit-style security checks
+    "SIM",     # simplifications
+]
+ignore = [
+    "E501",    # line length is handled by the formatter
+    "S101",    # assert is fine in tests
+    "SIM102",  # nested ifs are sometimes clearer
+    "SIM115",  # NamedTemporaryFile(delete=False) is managed manually
+    "UP046",   # keep Generic[T]; PEP 695 syntax adds no value here
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106", "S107", "S108", "S311", "S608"]
+# Column names come from constants, never user input; values are bound parameters.
+"app/migrations.py" = ["S608"]
+# Documented dev-only sentinels, rejected in production by app.security.config_guard.
+"config.py" = ["S105"]
+# Dev entry point only; production runs under gunicorn.
+"main.py" = ["S104"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

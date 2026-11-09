@@ -56,15 +56,18 @@ def create_app(config_name: str = None) -> Flask:
     app.register_blueprint(cases_bp)
 
     from app.services.csrf_service import init_csrf
+
     init_csrf(app)
 
     from app.security.headers import init_security_headers
+
     init_security_headers(app)
 
     _init_session_timeout(app)
     _init_mfa_enforcement(app)
 
     from app.services.demo_service import init_demo_reset
+
     init_demo_reset(app)
 
     # Create database tables and set SQLite WAL mode
@@ -82,9 +85,11 @@ def create_app(config_name: str = None) -> Flask:
 
         # Run migrations for existing databases (adds new columns/tables)
         from app.migrations import run_migrations
+
         run_migrations()
 
         from app.services.seed_service import seed_demo_account, seed_demo_cases
+
         demo_user = seed_demo_account()
         seed_demo_cases(demo_user)
 
@@ -133,9 +138,7 @@ def _init_mfa_enforcement(app):
 
         from app.services.mfa_service import MfaService
 
-        if MfaService().needs_enrolment(
-            current_user, app.config["MFA_REQUIRED_ROLES"]
-        ):
+        if MfaService().needs_enrolment(current_user, app.config["MFA_REQUIRED_ROLES"]):
             return redirect(url_for("auth.mfa_setup"))
 
         return None

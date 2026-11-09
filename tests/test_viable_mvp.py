@@ -1,5 +1,7 @@
 from datetime import date
 
+from conftest import csrf_token, login_admin, register
+
 from app.extensions import db
 from app.models.case import Case
 from app.models.case_attachment import CaseAttachment
@@ -8,8 +10,6 @@ from app.models.follow_up_task import FollowUpTask
 from app.models.invite_code import InviteCode, InviteCodeStatus
 from app.models.user import User
 from app.services.seed_service import seed_demo_cases
-
-from conftest import csrf_token, login, login_admin, register
 
 
 def create_case(client, **overrides):

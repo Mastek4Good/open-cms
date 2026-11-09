@@ -1,6 +1,6 @@
 """Restore a backup produced by scripts.backup.
 
-    python -m scripts.restore --archive /var/backups/quick-capture/....enc \
+    uv run python -m scripts.restore --archive /var/backups/quick-capture/....enc \
         --target /srv/quick-capture
 
 Restores into a target directory as `database.db` and `uploads/`. The target
@@ -16,7 +16,6 @@ import os
 import sys
 import tarfile
 import tempfile
-from typing import Optional
 
 from cryptography.fernet import Fernet, InvalidToken
 
@@ -26,7 +25,7 @@ from scripts.backup import ENCRYPTED_SUFFIX
 def restore_backup(
     archive_path: str,
     target_dir: str,
-    encryption_key: Optional[str] = None,
+    encryption_key: str | None = None,
     overwrite: bool = False,
 ) -> str:
     """Unpack a backup archive into `target_dir`. Returns the target path."""
@@ -47,8 +46,7 @@ def restore_backup(
         if archive_path.endswith(ENCRYPTED_SUFFIX):
             if not encryption_key:
                 raise ValueError(
-                    "This archive is encrypted but no BACKUP_ENCRYPTION_KEY was "
-                    "supplied."
+                    "This archive is encrypted but no BACKUP_ENCRYPTION_KEY was supplied."
                 )
             with open(archive_path, "rb") as handle:
                 try:
@@ -76,9 +74,7 @@ def restore_backup(
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--archive", required=True, help="Backup archive to restore.")
-    parser.add_argument(
-        "--target", required=True, help="Directory to restore into."
-    )
+    parser.add_argument("--target", required=True, help="Directory to restore into.")
     parser.add_argument(
         "--overwrite",
         action="store_true",

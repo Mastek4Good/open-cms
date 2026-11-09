@@ -1,0 +1,9 @@
+# Known false positives for gitleaks. Each line is a finding fingerprint
+# (commit:file:rule:line), so only these exact findings are ignored and any new
+# finding in the same files still fails the scan.
+#
+# Fixed Fernet key used only by the test configuration. The production config
+# leaves FIELD_ENCRYPTION_KEYS blank and the app refuses to start without a real one.
+26c847bc704744829cb4c2f2c3a56db94584873d:config.py:generic-api-key:142
+# Same test-only key, used as a fixture in the config guard tests.
+26c847bc704744829cb4c2f2c3a56db94584873d:tests/test_config_guard.py:generic-api-key:17

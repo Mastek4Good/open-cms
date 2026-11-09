@@ -237,8 +237,8 @@ Cases created by other accounts are not touched.
 To reset now:
 
 ```bash
-.venv/bin/python -m scripts.reset_demo          # shows what would be deleted
-.venv/bin/python -m scripts.reset_demo --apply  # deletes it and reseeds
+uv run python -m scripts.reset_demo          # shows what would be deleted
+uv run python -m scripts.reset_demo --apply  # deletes it and reseeds
 ```
 
 A demo deployment can reset every night instead. Set `DEMO_RESET_TIME` to a
@@ -250,7 +250,7 @@ before that time is gone the next morning.
 For an empty local case list, start the app with:
 
 ```bash
-DEMO_CASES_ENABLED=false .venv/bin/python main.py
+DEMO_CASES_ENABLED=false uv run python main.py
 ```
 
 For production, keep demo data off:

@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 from app.models.audit_log import AuditAction, AuditLog
 from app.repositories.audit_log_repository import AuditLogRepository
@@ -22,7 +21,7 @@ class AuditService:
         case_id: int,
         user_id: int,
         field_name: str,
-        new_value: Optional[str] = None,
+        new_value: str | None = None,
     ) -> AuditLog:
         """Log a creation event."""
         return self.repo.create(
@@ -39,8 +38,8 @@ class AuditService:
         case_id: int,
         user_id: int,
         field_name: str,
-        old_value: Optional[str] = None,
-        new_value: Optional[str] = None,
+        old_value: str | None = None,
+        new_value: str | None = None,
     ) -> AuditLog:
         """Log an update event."""
         return self.repo.create(
@@ -57,7 +56,7 @@ class AuditService:
         case_id: int,
         user_id: int,
         field_name: str,
-        old_value: Optional[str] = None,
+        old_value: str | None = None,
     ) -> AuditLog:
         """Log a deletion event."""
         return self.repo.create(

@@ -10,7 +10,7 @@ that no third party gets script access to those pages.
 
 import secrets
 
-from flask import current_app, g, request
+from flask import g, request
 
 
 def _csp(nonce: str) -> str:
@@ -56,9 +56,7 @@ def init_security_headers(app):
         response.headers.setdefault("Content-Security-Policy", _csp(nonce))
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("X-Frame-Options", "DENY")
-        response.headers.setdefault(
-            "Referrer-Policy", "strict-origin-when-cross-origin"
-        )
+        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
         response.headers.setdefault(
             "Permissions-Policy",
             "camera=(), microphone=(self), geolocation=(self), payment=()",
