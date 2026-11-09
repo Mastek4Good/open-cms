@@ -35,19 +35,27 @@ class _TextCollector(HTMLParser):
         self.parts.append(data)
 
 
-def has_visible_text(html: str) -> bool:
-    """True if the HTML fragment contains any non-whitespace text.
+def visible_text(html: str) -> str:
+    """The text nodes of an HTML fragment, joined with spaces.
 
     Uses a real (linear-time) HTML parser rather than a tag-stripping regex:
     patterns like ``<[^>]+>`` backtrack quadratically on untrusted input such as
     a long run of ``<`` characters with no closing ``>``.
+
+    Tags become spaces rather than vanishing, so ``<p>one</p><p>two</p>`` yields
+    two words rather than the single word "onetwo".
     """
     if not html:
-        return False
+        return ""
     collector = _TextCollector()
     collector.feed(html)
     collector.close()
-    return bool("".join(collector.parts).strip())
+    return " ".join(collector.parts)
+
+
+def has_visible_text(html: str) -> bool:
+    """True if the HTML fragment contains any non-whitespace text."""
+    return bool(visible_text(html).strip())
 
 
 def sanitize_html(value: str) -> str:

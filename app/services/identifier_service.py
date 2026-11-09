@@ -1,6 +1,7 @@
 import re
 
 from app.repositories.case_repository import CaseRepository
+from app.services.html_service import visible_text
 
 
 class IdentifierService:
@@ -57,8 +58,9 @@ class IdentifierService:
         """
         text = ""
         if notes:
-            # Strip HTML tags
-            text = re.sub(r"<[^>]+>", " ", notes)
+            # Not a tag-stripping regex: `<[^>]+>` backtracks quadratically on
+            # input such as a long run of "<" with no closing ">".
+            text = visible_text(notes)
         elif transcript:
             text = transcript
 
