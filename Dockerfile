@@ -4,7 +4,7 @@
 # Production is deployed as a supervised gunicorn process on the host - see
 # docs/operations/deployment.md.
 
-FROM python:3.13-slim
+FROM python:3.15-slim
 
 WORKDIR /app
 
