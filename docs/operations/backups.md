@@ -28,8 +28,8 @@ at creation is what makes it safe to ship off-site.
 ## Running a backup
 
 ```bash
-export BACKUP_ENCRYPTION_KEY='<Fernet key from python -m scripts.generate_keys>'
-python -m scripts.backup --destination /var/backups/quick-capture
+export BACKUP_ENCRYPTION_KEY='<Fernet key from uv run python -m scripts.generate_keys>'
+uv run python -m scripts.backup --destination /var/backups/quick-capture
 ```
 
 The script refuses to write an unencrypted archive unless you pass
@@ -48,7 +48,8 @@ Nightly, outside working hours. Any scheduler works — the point is that it run
 unattended and that failures are noticed.
 
 ```
-15 2 * * * cd /srv/quick-capture && /srv/quick-capture/.venv/bin/python -m scripts.backup --destination /var/backups/quick-capture >> /var/log/quick-capture-backup.log 2>&1
+# cron has a minimal PATH: use the full path to uv (e.g. /usr/local/bin/uv or ~/.local/bin/uv)
+15 2 * * * cd /srv/quick-capture && uv run --no-dev --locked python -m scripts.backup --destination /var/backups/quick-capture >> /var/log/quick-capture-backup.log 2>&1
 ```
 
 Set up an alert if the job fails or if no new archive appears. A backup nobody
@@ -68,7 +69,7 @@ as the archives.**
 
 ```bash
 export BACKUP_ENCRYPTION_KEY='<the key the archive was written with>'
-python -m scripts.restore \
+uv run python -m scripts.restore \
     --archive /var/backups/quick-capture/quick-capture-20260904T021500Z.tar.gz.enc \
     --target /srv/quick-capture-restored
 ```

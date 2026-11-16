@@ -1,6 +1,4 @@
-from typing import Optional, Tuple
-
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
@@ -20,7 +18,7 @@ class AuthService:
         invite_code: str,
         expected_invite_code: str,
         bootstrap_invite_enabled: bool = True,
-    ) -> Tuple[Optional[User], Optional[str]]:
+    ) -> tuple[User | None, str | None]:
         """Register a new user.
 
         Returns:
@@ -58,7 +56,7 @@ class AuthService:
         )
         return user, None
 
-    def authenticate(self, email: str, password: str) -> Tuple[Optional[User], Optional[str]]:
+    def authenticate(self, email: str, password: str) -> tuple[User | None, str | None]:
         """Authenticate a user by email and password.
 
         Returns:

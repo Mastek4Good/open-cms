@@ -74,7 +74,10 @@ graph LR
 ```
 ├── main.py                        Entry point
 ├── config.py                      App configuration (Dev/Prod)
-├── requirements.txt               Python dependencies (pinned)
+├── pyproject.toml / uv.lock       Dependencies (uv) and tool config
+├── .pre-commit-config.yaml        Local commit/push quality gates (all hooks in-repo)
+├── hooks/                         In-repo hook code used by pre-commit (hooks/checks.py)
+├── .github/                       CI and security workflows, Dependabot
 ├── Dockerfile                     Local development container
 ├── docker-compose.yml             Local development orchestration
 ├── scripts/                       Backup, restore, retention, key generation
@@ -121,6 +124,7 @@ graph LR
 │       └── Dockerfile             whisper.cpp server container
 ├── docs/
 │   ├── architecture.md            This file
+│   ├── development.md             uv, pre-commit and CI workflow
 │   └── adrs/                      Architecture Decision Records
 │       ├── 001-what3words-integration.md
 │       ├── 002-audit-trail.md
@@ -624,6 +628,7 @@ Detailed rationale for significant decisions is documented in `/docs/adrs/`:
 - [ADR-007: Team-Wide Case Visibility](adrs/007-team-wide-case-visibility.md) — all workers see all cases, and why
 - [ADR-008: Security Controls for Production](adrs/008-security-controls-for-production.md) — the eleven pre-production blockers and how each is closed
 - [ADR-009: Shared Demo Account](adrs/009-shared-demo-account.md) — any-code MFA and a nightly data reset for the demo login
+- [ADR-010: uv and Automated Quality Gates](adrs/010-uv-and-automated-quality-gates.md) — locked dependencies, ruff, pre-commit and CI
 
 ## Future Considerations
 

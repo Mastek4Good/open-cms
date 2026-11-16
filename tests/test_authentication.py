@@ -3,14 +3,13 @@
 from datetime import UTC, datetime, timedelta
 
 import pyotp
-import pytest
+from conftest import csrf_token, enrol_mfa, login, login_admin, register
 
 from app.extensions import db
 from app.models.login_attempt import LoginAttempt
 from app.models.user import MfaRecoveryCode, User
 from app.services.login_throttle_service import LoginThrottleService
 from app.services.mfa_service import MfaService
-from conftest import csrf_token, enrol_mfa, login, login_admin, register
 
 
 def attempt_login(client, email, password):
@@ -87,9 +86,7 @@ def test_failures_outside_the_window_do_not_count(app):
 
     stale = datetime.now(UTC) - timedelta(minutes=30)
     for _ in range(5):
-        db.session.add(
-            LoginAttempt(email="old@example.org", successful=False, created_at=stale)
-        )
+        db.session.add(LoginAttempt(email="old@example.org", successful=False, created_at=stale))
     db.session.commit()
 
     assert throttle.check("old@example.org", "127.0.0.1").allowed

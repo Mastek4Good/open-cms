@@ -1,6 +1,7 @@
 """The seeded demo cases must match the current case model and load cleanly."""
 
 import pytest
+from conftest import login_admin
 
 from app.models.case import (
     ETHNICITY_CHOICES,
@@ -14,8 +15,6 @@ from app.models.case_note import CaseNote
 from app.models.user import User
 from app.services.demo_service import reset_demo_data
 from app.services.seed_service import seed_demo_cases
-
-from conftest import login_admin
 
 
 @pytest.fixture()
@@ -44,9 +43,7 @@ def test_demo_cases_exercise_the_new_fields(demo_cases):
     assert any(case.ethnicity for case in demo_cases)
     assert any(case.location_address for case in demo_cases)
     assert any(case.ni_number for case in demo_cases)
-    assert any(
-        a.kind == AttachmentKind.CONSENT_RISK for a in CaseAttachment.query.all()
-    )
+    assert any(a.kind == AttachmentKind.CONSENT_RISK for a in CaseAttachment.query.all())
     assert CaseNote.query.filter_by(needs_review=True).count() >= 1
 
 

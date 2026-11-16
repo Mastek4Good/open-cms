@@ -22,7 +22,6 @@ import os
 import shutil
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
-from typing import List, Optional
 
 from app.extensions import db
 from app.models.access_log import AccessLog
@@ -52,7 +51,7 @@ class PurgeResult:
 class RetentionRunResult:
     """Summary of a scheduled retention run, for the operator's log."""
 
-    cases_purged: List[PurgeResult] = field(default_factory=list)
+    cases_purged: list[PurgeResult] = field(default_factory=list)
     access_logs_pruned: int = 0
     login_attempts_pruned: int = 0
 
@@ -69,7 +68,7 @@ class RetentionService:
         self,
         case: Case,
         reason: str,
-        requested_by_user_id: Optional[int] = None,
+        requested_by_user_id: int | None = None,
     ) -> PurgeResult:
         """Permanently destroy a case, its children, its logs and its files."""
         result = self.destroy_case(case)
@@ -105,29 +104,23 @@ class RetentionService:
             files_deleted=files_deleted,
         )
 
-    def find_expired_cases(self, retention_days: int) -> List[Case]:
+    def find_expired_cases(self, retention_days: int) -> list[Case]:
         """Archived cases whose retention period has elapsed."""
         cutoff = datetime.now(UTC) - timedelta(days=retention_days)
-        return (
-            Case.query.filter(
-                Case.archived_at.isnot(None),
-                Case.archived_at < cutoff,
-            ).all()
-        )
+        return Case.query.filter(
+            Case.archived_at.isnot(None),
+            Case.archived_at < cutoff,
+        ).all()
 
-    def purge_expired_cases(self, retention_days: int) -> List[PurgeResult]:
+    def purge_expired_cases(self, retention_days: int) -> list[PurgeResult]:
         """Purge every archived case past the retention period."""
         return [
             self.purge_case(case, reason=REASON_RETENTION_POLICY)
             for case in self.find_expired_cases(retention_days)
         ]
 
-    def get_erasure_log(self, limit: int = 100) -> List[ErasureLog]:
-        return (
-            ErasureLog.query.order_by(ErasureLog.purged_at.desc())
-            .limit(limit)
-            .all()
-        )
+    def get_erasure_log(self, limit: int = 100) -> list[ErasureLog]:
+        return ErasureLog.query.order_by(ErasureLog.purged_at.desc()).limit(limit).all()
 
     # --- Internals -------------------------------------------------------
 
@@ -161,17 +154,12 @@ class RetentionService:
         deleted = 0
 
         interaction_ids = [
-            row[0]
-            for row in db.session.query(CaseInteraction.id)
-            .filter_by(case_id=case_id)
-            .all()
+            row[0] for row in db.session.query(CaseInteraction.id).filter_by(case_id=case_id).all()
         ]
         if interaction_ids:
-            deleted += (
-                InteractionTag.query.filter(
-                    InteractionTag.interaction_id.in_(interaction_ids)
-                ).delete(synchronize_session=False)
-            )
+            deleted += InteractionTag.query.filter(
+                InteractionTag.interaction_id.in_(interaction_ids)
+            ).delete(synchronize_session=False)
 
         for model in (
             CaseNote,
@@ -182,12 +170,8 @@ class RetentionService:
             AuditLog,
             AccessLog,
         ):
-            deleted += model.query.filter_by(case_id=case_id).delete(
-                synchronize_session=False
-            )
+            deleted += model.query.filter_by(case_id=case_id).delete(synchronize_session=False)
 
-        deleted += Case.query.filter_by(id=case_id).delete(
-            synchronize_session=False
-        )
+        deleted += Case.query.filter_by(id=case_id).delete(synchronize_session=False)
         db.session.commit()
         return deleted

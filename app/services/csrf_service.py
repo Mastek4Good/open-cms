@@ -2,7 +2,6 @@ import secrets
 
 from flask import abort, request, session
 
-
 CSRF_SESSION_KEY = "_csrf_token"
 
 

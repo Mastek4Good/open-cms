@@ -47,9 +47,7 @@ def run_migrations():
 
 def _column_exists(table: str, column: str) -> bool:
     """Check if a column exists in a table."""
-    result = db.session.execute(
-        db.text(f"PRAGMA table_info({table})")
-    )
+    result = db.session.execute(db.text(f"PRAGMA table_info({table})"))
     columns = [row[1] for row in result]
     return column in columns
 
@@ -69,9 +67,7 @@ def _add_ni_number_to_cases():
         return
 
     logger.info("Applying migration: add ni_number to cases")
-    db.session.execute(
-        db.text("ALTER TABLE cases ADD COLUMN ni_number VARCHAR(20)")
-    )
+    db.session.execute(db.text("ALTER TABLE cases ADD COLUMN ni_number VARCHAR(20)"))
     db.session.commit()
 
 
@@ -109,9 +105,7 @@ def _add_priority_fields_to_cases():
         if _column_exists("cases", column):
             continue
         logger.info(f"Applying migration: add {column} to cases")
-        db.session.execute(
-            db.text(f"ALTER TABLE cases ADD COLUMN {column} {ddl_type}")
-        )
+        db.session.execute(db.text(f"ALTER TABLE cases ADD COLUMN {column} {ddl_type}"))
         db.session.commit()
 
 
@@ -121,7 +115,8 @@ def _create_case_actions_table():
         return
 
     logger.info("Applying migration: create case_actions table")
-    db.session.execute(db.text("""
+    db.session.execute(
+        db.text("""
         CREATE TABLE case_actions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             case_id INTEGER NOT NULL,
@@ -131,7 +126,8 @@ def _create_case_actions_table():
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (case_id) REFERENCES cases(id)
         )
-    """))
+    """)
+    )
     db.session.commit()
 
 
@@ -141,7 +137,8 @@ def _create_case_interactions_table():
         return
 
     logger.info("Applying migration: create case_interactions table")
-    db.session.execute(db.text("""
+    db.session.execute(
+        db.text("""
         CREATE TABLE case_interactions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             case_id INTEGER NOT NULL,
@@ -156,7 +153,8 @@ def _create_case_interactions_table():
             FOREIGN KEY (case_id) REFERENCES cases(id),
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
-    """))
+    """)
+    )
     db.session.commit()
 
 
@@ -166,7 +164,8 @@ def _create_interaction_tags_table():
         return
 
     logger.info("Applying migration: create interaction_tags table")
-    db.session.execute(db.text("""
+    db.session.execute(
+        db.text("""
         CREATE TABLE interaction_tags (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             interaction_id INTEGER NOT NULL,
@@ -175,7 +174,8 @@ def _create_interaction_tags_table():
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (interaction_id) REFERENCES case_interactions(id)
         )
-    """))
+    """)
+    )
     db.session.commit()
 
 
@@ -185,7 +185,8 @@ def _create_follow_up_tasks_table():
         return
 
     logger.info("Applying migration: create follow_up_tasks table")
-    db.session.execute(db.text("""
+    db.session.execute(
+        db.text("""
         CREATE TABLE follow_up_tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             case_id INTEGER NOT NULL,
@@ -200,7 +201,8 @@ def _create_follow_up_tasks_table():
             FOREIGN KEY (created_by_user_id) REFERENCES users(id),
             FOREIGN KEY (assigned_user_id) REFERENCES users(id)
         )
-    """))
+    """)
+    )
     db.session.commit()
 
 
@@ -210,7 +212,8 @@ def _create_case_attachments_table():
         return
 
     logger.info("Applying migration: create case_attachments table")
-    db.session.execute(db.text("""
+    db.session.execute(
+        db.text("""
         CREATE TABLE case_attachments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             case_id INTEGER NOT NULL,
@@ -225,7 +228,8 @@ def _create_case_attachments_table():
             FOREIGN KEY (interaction_id) REFERENCES case_interactions(id),
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
-    """))
+    """)
+    )
     db.session.commit()
 
 
@@ -235,7 +239,8 @@ def _create_invite_codes_table():
         return
 
     logger.info("Applying migration: create invite_codes table")
-    db.session.execute(db.text("""
+    db.session.execute(
+        db.text("""
         CREATE TABLE invite_codes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             code VARCHAR(100) NOT NULL UNIQUE,
@@ -250,7 +255,8 @@ def _create_invite_codes_table():
             FOREIGN KEY (created_by_user_id) REFERENCES users(id),
             FOREIGN KEY (used_by_user_id) REFERENCES users(id)
         )
-    """))
+    """)
+    )
     db.session.commit()
 
 
@@ -260,7 +266,8 @@ def _create_audit_logs_table():
         return
 
     logger.info("Applying migration: create audit_logs table")
-    db.session.execute(db.text("""
+    db.session.execute(
+        db.text("""
         CREATE TABLE audit_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             case_id INTEGER NOT NULL,
@@ -273,7 +280,8 @@ def _create_audit_logs_table():
             FOREIGN KEY (case_id) REFERENCES cases(id),
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
-    """))
+    """)
+    )
     db.session.commit()
 
 
@@ -290,9 +298,7 @@ def _add_mfa_fields_to_users():
         if _column_exists("users", column):
             continue
         logger.info(f"Applying migration: add {column} to users")
-        db.session.execute(
-            db.text(f"ALTER TABLE users ADD COLUMN {column} {ddl_type}")
-        )
+        db.session.execute(db.text(f"ALTER TABLE users ADD COLUMN {column} {ddl_type}"))
         db.session.commit()
 
 
@@ -302,7 +308,8 @@ def _create_mfa_recovery_codes_table():
         return
 
     logger.info("Applying migration: create mfa_recovery_codes table")
-    db.session.execute(db.text("""
+    db.session.execute(
+        db.text("""
         CREATE TABLE mfa_recovery_codes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -311,7 +318,8 @@ def _create_mfa_recovery_codes_table():
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
-    """))
+    """)
+    )
     db.session.commit()
 
 
@@ -321,7 +329,8 @@ def _create_login_attempts_table():
         return
 
     logger.info("Applying migration: create login_attempts table")
-    db.session.execute(db.text("""
+    db.session.execute(
+        db.text("""
         CREATE TABLE login_attempts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             email VARCHAR(150),
@@ -329,16 +338,15 @@ def _create_login_attempts_table():
             successful BOOLEAN NOT NULL DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
-    """))
-    db.session.execute(db.text(
-        "CREATE INDEX ix_login_attempts_email ON login_attempts (email)"
-    ))
-    db.session.execute(db.text(
-        "CREATE INDEX ix_login_attempts_ip_address ON login_attempts (ip_address)"
-    ))
-    db.session.execute(db.text(
-        "CREATE INDEX ix_login_attempts_created_at ON login_attempts (created_at)"
-    ))
+    """)
+    )
+    db.session.execute(db.text("CREATE INDEX ix_login_attempts_email ON login_attempts (email)"))
+    db.session.execute(
+        db.text("CREATE INDEX ix_login_attempts_ip_address ON login_attempts (ip_address)")
+    )
+    db.session.execute(
+        db.text("CREATE INDEX ix_login_attempts_created_at ON login_attempts (created_at)")
+    )
     db.session.commit()
 
 
@@ -348,7 +356,8 @@ def _create_access_logs_table():
         return
 
     logger.info("Applying migration: create access_logs table")
-    db.session.execute(db.text("""
+    db.session.execute(
+        db.text("""
         CREATE TABLE access_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -361,16 +370,13 @@ def _create_access_logs_table():
             FOREIGN KEY (user_id) REFERENCES users(id),
             FOREIGN KEY (case_id) REFERENCES cases(id)
         )
-    """))
-    db.session.execute(db.text(
-        "CREATE INDEX ix_access_logs_user_id ON access_logs (user_id)"
-    ))
-    db.session.execute(db.text(
-        "CREATE INDEX ix_access_logs_case_id ON access_logs (case_id)"
-    ))
-    db.session.execute(db.text(
-        "CREATE INDEX ix_access_logs_created_at ON access_logs (created_at)"
-    ))
+    """)
+    )
+    db.session.execute(db.text("CREATE INDEX ix_access_logs_user_id ON access_logs (user_id)"))
+    db.session.execute(db.text("CREATE INDEX ix_access_logs_case_id ON access_logs (case_id)"))
+    db.session.execute(
+        db.text("CREATE INDEX ix_access_logs_created_at ON access_logs (created_at)")
+    )
     db.session.commit()
 
 
@@ -380,7 +386,8 @@ def _create_erasure_logs_table():
         return
 
     logger.info("Applying migration: create erasure_logs table")
-    db.session.execute(db.text("""
+    db.session.execute(
+        db.text("""
         CREATE TABLE erasure_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             case_identifier VARCHAR(100) NOT NULL,
@@ -390,7 +397,8 @@ def _create_erasure_logs_table():
             files_deleted INTEGER NOT NULL DEFAULT 0,
             purged_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
-    """))
+    """)
+    )
     db.session.commit()
 
 
@@ -409,8 +417,9 @@ def _encrypt_sensitive_case_fields():
     Does nothing when FIELD_ENCRYPTION_KEYS is unset, which is the normal
     local development case.
     """
-    from app.security.crypto import CIPHER_PREFIX, encrypt_value, parse_keys
     from flask import current_app
+
+    from app.security.crypto import CIPHER_PREFIX, encrypt_value, parse_keys
 
     if not parse_keys(current_app.config.get("FIELD_ENCRYPTION_KEYS")):
         return
@@ -419,9 +428,7 @@ def _encrypt_sensitive_case_fields():
         return
 
     columns = ", ".join(ENCRYPTED_CASE_COLUMNS)
-    rows = db.session.execute(
-        db.text(f"SELECT id, {columns} FROM cases")
-    ).fetchall()
+    rows = db.session.execute(db.text(f"SELECT id, {columns} FROM cases")).fetchall()
 
     updated = 0
     for row in rows:
@@ -444,9 +451,7 @@ def _encrypt_sensitive_case_fields():
         updated += 1
 
     if updated:
-        logger.info(
-            f"Applying migration: encrypted sensitive fields on {updated} case(s)"
-        )
+        logger.info(f"Applying migration: encrypted sensitive fields on {updated} case(s)")
         db.session.commit()
 
 
@@ -462,9 +467,7 @@ def _add_outreach_fields_to_cases():
         if _column_exists("cases", column):
             continue
         logger.info(f"Applying migration: add {column} to cases")
-        db.session.execute(
-            db.text(f"ALTER TABLE cases ADD COLUMN {column} {ddl_type}")
-        )
+        db.session.execute(db.text(f"ALTER TABLE cases ADD COLUMN {column} {ddl_type}"))
         db.session.commit()
 
 
@@ -474,7 +477,5 @@ def _add_kind_to_case_attachments():
         return
 
     logger.info("Applying migration: add kind to case_attachments")
-    db.session.execute(
-        db.text("ALTER TABLE case_attachments ADD COLUMN kind VARCHAR(30)")
-    )
+    db.session.execute(db.text("ALTER TABLE case_attachments ADD COLUMN kind VARCHAR(30)"))
     db.session.commit()

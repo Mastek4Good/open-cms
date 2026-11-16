@@ -19,7 +19,6 @@ import os
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from datetime import time as dt_time
-from typing import List, Optional
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import or_
@@ -36,17 +35,17 @@ RESET_MARKER_FILENAME = "demo_last_reset"
 
 @dataclass
 class DemoResetResult:
-    cases_destroyed: List[PurgeResult] = field(default_factory=list)
+    cases_destroyed: list[PurgeResult] = field(default_factory=list)
     cases_seeded: int = 0
 
 
-def get_demo_user(config) -> Optional[User]:
+def get_demo_user(config) -> User | None:
     if not config.get("DEMO_ACCOUNT_ENABLED"):
         return None
     return User.query.filter_by(email=config["DEMO_ACCOUNT_EMAIL"]).first()
 
 
-def is_shared_demo_account(user: Optional[User], config) -> bool:
+def is_shared_demo_account(user: User | None, config) -> bool:
     """Whether this user is the demo account and it runs with shared MFA."""
     if not user or not config.get("DEMO_ACCOUNT_ENABLED"):
         return False
@@ -55,7 +54,7 @@ def is_shared_demo_account(user: Optional[User], config) -> bool:
     return (user.email or "").lower() == config["DEMO_ACCOUNT_EMAIL"].lower()
 
 
-def find_resettable_cases(demo_user: User) -> List[Case]:
+def find_resettable_cases(demo_user: User) -> list[Case]:
     """Cases the demo account created, plus the seeded demo cases."""
     from app.services.seed_service import DEMO_CASE_DEFINITIONS
 
@@ -90,8 +89,7 @@ def reset_demo_data(config) -> DemoResetResult:
     result.cases_seeded = Case.query.count() - before
 
     logger.info(
-        f"Demo reset: destroyed {len(result.cases_destroyed)} case(s), "
-        f"seeded {result.cases_seeded}"
+        f"Demo reset: destroyed {len(result.cases_destroyed)} case(s), seeded {result.cases_seeded}"
     )
     return result
 
@@ -102,9 +100,7 @@ def parse_reset_time(value: str) -> dt_time:
         hour, minute = (int(part) for part in value.split(":"))
         return dt_time(hour, minute)
     except ValueError:
-        raise ValueError(
-            f"DEMO_RESET_TIME must be HH:MM in 24-hour time, got {value!r}"
-        ) from None
+        raise ValueError(f"DEMO_RESET_TIME must be HH:MM in 24-hour time, got {value!r}") from None
 
 
 def most_recent_reset(now: datetime, reset_at: dt_time, tz: ZoneInfo) -> datetime:
@@ -112,9 +108,7 @@ def most_recent_reset(now: datetime, reset_at: dt_time, tz: ZoneInfo) -> datetim
     local_now = now.astimezone(tz)
     scheduled = datetime.combine(local_now.date(), reset_at, tzinfo=tz)
     if scheduled > local_now:
-        scheduled = datetime.combine(
-            local_now.date() - timedelta(days=1), reset_at, tzinfo=tz
-        )
+        scheduled = datetime.combine(local_now.date() - timedelta(days=1), reset_at, tzinfo=tz)
     return scheduled
 
 

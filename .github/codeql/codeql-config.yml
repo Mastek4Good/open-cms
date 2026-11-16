@@ -1,0 +1,5 @@
+name: CodeQL config
+
+# Third-party code we do not maintain; findings in it are not actionable here.
+paths-ignore:
+  - app/static/vendor

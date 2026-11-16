@@ -43,9 +43,7 @@ def test_no_template_uses_an_inline_event_handler():
 
 def test_every_inline_script_block_carries_the_nonce():
     offenders = [
-        path.name
-        for path in TEMPLATE_DIR.rglob("*.html")
-        if "<script>" in path.read_text()
+        path.name for path in TEMPLATE_DIR.rglob("*.html") if "<script>" in path.read_text()
     ]
 
     assert offenders == []

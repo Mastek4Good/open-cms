@@ -1,12 +1,12 @@
 import logging
 import os
 from datetime import UTC, date, datetime
-from typing import Optional, Tuple
 
 from flask import current_app
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
+from app.extensions import db
 from app.models.case import (
     ETHNICITY_CHOICES,
     Case,
@@ -20,19 +20,23 @@ from app.models.case_interaction import CaseInteraction, InteractionTag, Interac
 from app.models.case_note import CaseNote, NoteSource
 from app.models.follow_up_task import FollowUpStatus, FollowUpTask
 from app.models.user import User
-from app.repositories.case_repository import CaseRepository
 from app.repositories.case_note_repository import CaseNoteRepository
+from app.repositories.case_repository import CaseRepository
 from app.services.audit_service import AuditService
-from app.services.html_service import sanitize_html
+from app.services.html_service import has_visible_text, sanitize_html
 from app.services.identifier_service import IdentifierService
 from app.services.transcription_client import TranscriptionClient
-from app.extensions import db
 
 logger = logging.getLogger(__name__)
 
 ALLOWED_AUDIO_EXTENSIONS = {"webm", "ogg", "mp3", "wav", "m4a"}
 ALLOWED_ATTACHMENT_EXTENSIONS = {"pdf", "png", "jpg", "jpeg", "doc", "docx", "txt"}
 ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg"}
+
+# Upper bound on free-text note content (characters). Generous for a typed or
+# transcribed note, but bounds the work done on any one request.
+MAX_NOTE_LENGTH = 20_000
+NOTE_TOO_LONG_ERROR = f"Notes can be at most {MAX_NOTE_LENGTH:,} characters."
 
 
 class CaseService:
@@ -46,33 +50,33 @@ class CaseService:
     def create_case(
         self,
         user_id: int,
-        full_name: Optional[str] = None,
-        phone_number: Optional[str] = None,
-        location_w3w: Optional[str] = None,
-        location_lat: Optional[float] = None,
-        location_lng: Optional[float] = None,
-        notes_content: Optional[str] = None,
-        category: Optional[str] = None,
-        voice_note_file: Optional[FileStorage] = None,
-        voice_transcript: Optional[str] = None,
-        date_of_birth: Optional[str] = None,
-        age: Optional[int] = None,
-        gender: Optional[str] = None,
-        physical_description: Optional[str] = None,
-        other_contact: Optional[str] = None,
-        consent_status: Optional[str] = None,
-        consent_date: Optional[str] = None,
-        risk_rating: Optional[str] = None,
-        risk_notes: Optional[str] = None,
-        mental_health_notes: Optional[str] = None,
-        current_situation: Optional[str] = None,
-        ethnicity: Optional[str] = None,
-        ni_number: Optional[str] = None,
-        location_address: Optional[str] = None,
-        project: Optional[str] = None,
-        key_worker_id: Optional[int] = None,
-        consent_image: Optional[FileStorage] = None,
-    ) -> Tuple[Optional[Case], Optional[str]]:
+        full_name: str | None = None,
+        phone_number: str | None = None,
+        location_w3w: str | None = None,
+        location_lat: float | None = None,
+        location_lng: float | None = None,
+        notes_content: str | None = None,
+        category: str | None = None,
+        voice_note_file: FileStorage | None = None,
+        voice_transcript: str | None = None,
+        date_of_birth: str | None = None,
+        age: int | None = None,
+        gender: str | None = None,
+        physical_description: str | None = None,
+        other_contact: str | None = None,
+        consent_status: str | None = None,
+        consent_date: str | None = None,
+        risk_rating: str | None = None,
+        risk_notes: str | None = None,
+        mental_health_notes: str | None = None,
+        current_situation: str | None = None,
+        ethnicity: str | None = None,
+        ni_number: str | None = None,
+        location_address: str | None = None,
+        project: str | None = None,
+        key_worker_id: int | None = None,
+        consent_image: FileStorage | None = None,
+    ) -> tuple[Case | None, str | None]:
         """Create a new case/interaction.
 
         Args:
@@ -108,6 +112,9 @@ class CaseService:
         if consent_image and consent_image.filename:
             if self._extension(consent_image.filename) not in ALLOWED_IMAGE_EXTENSIONS:
                 return None, "The consent and risk image must be a PNG or JPEG."
+
+        if self.note_too_long(notes_content, voice_transcript):
+            return None, NOTE_TOO_LONG_ERROR
 
         calculated_age = self._calculate_age(date_of_birth)
         if calculated_age is not None:
@@ -214,7 +221,7 @@ class CaseService:
     def get_key_worker_choices(self) -> list[User]:
         return User.query.order_by(User.first_name.asc(), User.id.asc()).all()
 
-    def get_case(self, case_id: int) -> Optional[Case]:
+    def get_case(self, case_id: int) -> Case | None:
         return self.case_repo.get_by_id(case_id)
 
     def get_notes_for_case(self, case_id: int) -> list[CaseNote]:
@@ -224,25 +231,25 @@ class CaseService:
         self,
         case: Case,
         user_id: int,
-        full_name: Optional[str] = None,
-        phone_number: Optional[str] = None,
-        ni_number: Optional[str] = None,
-        date_of_birth: Optional[str] = None,
-        age: Optional[int] = None,
-        gender: Optional[str] = None,
-        physical_description: Optional[str] = None,
-        other_contact: Optional[str] = None,
-        consent_status: Optional[str] = None,
-        consent_date: Optional[str] = None,
-        risk_rating: Optional[str] = None,
-        risk_notes: Optional[str] = None,
-        mental_health_notes: Optional[str] = None,
-        current_situation: Optional[str] = None,
-        ethnicity: Optional[str] = None,
-        location_address: Optional[str] = None,
-        project: Optional[str] = None,
+        full_name: str | None = None,
+        phone_number: str | None = None,
+        ni_number: str | None = None,
+        date_of_birth: str | None = None,
+        age: int | None = None,
+        gender: str | None = None,
+        physical_description: str | None = None,
+        other_contact: str | None = None,
+        consent_status: str | None = None,
+        consent_date: str | None = None,
+        risk_rating: str | None = None,
+        risk_notes: str | None = None,
+        mental_health_notes: str | None = None,
+        current_situation: str | None = None,
+        ethnicity: str | None = None,
+        location_address: str | None = None,
+        project: str | None = None,
         key_worker_id=None,
-    ) -> Tuple[Optional[Case], Optional[str]]:
+    ) -> tuple[Case | None, str | None]:
         """Update editable case fields with audit logging.
 
         The what3words location, identifier and created_at remain immutable.
@@ -263,7 +270,9 @@ class CaseService:
             if error:
                 return None, error
             if key_worker_id != case.assigned_user_id:
-                old_worker = db.session.get(User, case.assigned_user_id) if case.assigned_user_id else None
+                old_worker = (
+                    db.session.get(User, case.assigned_user_id) if case.assigned_user_id else None
+                )
                 new_worker = db.session.get(User, key_worker_id) if key_worker_id else None
                 self.audit_service.log_update(
                     case_id=case.id,
@@ -329,7 +338,7 @@ class CaseService:
 
     def update_note_content(
         self, note_id: int, content: str, user_id: int
-    ) -> Tuple[Optional[CaseNote], Optional[str]]:
+    ) -> tuple[CaseNote | None, str | None]:
         """Update the content of an existing note with audit logging."""
         note = self.note_repo.get_by_id(note_id)
         if not note:
@@ -337,6 +346,9 @@ class CaseService:
 
         if not content or not content.strip():
             return None, "Note content cannot be empty"
+
+        if self.note_too_long(content):
+            return None, NOTE_TOO_LONG_ERROR
 
         updated = self.note_repo.update(note, content=sanitize_html(content))
 
@@ -356,7 +368,7 @@ class CaseService:
         content: str,
         source: str = NoteSource.MANUAL,
         needs_review: bool = False,
-        user_id: Optional[int] = None,
+        user_id: int | None = None,
     ) -> CaseNote:
         """Add a note to a case.
 
@@ -389,13 +401,16 @@ class CaseService:
         self,
         case_id: int,
         user_id: int,
-        note_content: Optional[str] = None,
-        tag_types: Optional[list[str]] = None,
-        outcome: Optional[str] = None,
-        location_w3w: Optional[str] = None,
-        location_lat: Optional[float] = None,
-        location_lng: Optional[float] = None,
-    ) -> Tuple[Optional[CaseInteraction], Optional[str]]:
+        note_content: str | None = None,
+        tag_types: list[str] | None = None,
+        outcome: str | None = None,
+        location_w3w: str | None = None,
+        location_lat: float | None = None,
+        location_lng: float | None = None,
+    ) -> tuple[CaseInteraction | None, str | None]:
+        if self.note_too_long(note_content):
+            return None, NOTE_TOO_LONG_ERROR
+
         tag_types = tag_types or []
         valid_tags = [t for t in tag_types if t in InteractionTagType.CHOICES]
         clean_note = sanitize_html(note_content or "")
@@ -435,17 +450,19 @@ class CaseService:
         return interaction, None
 
     def get_interactions_for_case(self, case_id: int) -> list[CaseInteraction]:
-        return CaseInteraction.query.filter_by(case_id=case_id).order_by(
-            CaseInteraction.occurred_at.desc()
-        ).all()
+        return (
+            CaseInteraction.query.filter_by(case_id=case_id)
+            .order_by(CaseInteraction.occurred_at.desc())
+            .all()
+        )
 
     def add_follow_up_task(
         self,
         case_id: int,
         user_id: int,
         title: str,
-        due_date: Optional[str] = None,
-    ) -> Tuple[Optional[FollowUpTask], Optional[str]]:
+        due_date: str | None = None,
+    ) -> tuple[FollowUpTask | None, str | None]:
         title = (title or "").strip()
         if not title:
             return None, "Follow-up title is required."
@@ -472,7 +489,7 @@ class CaseService:
         self,
         task_id: int,
         user_id: int,
-    ) -> Tuple[Optional[FollowUpTask], Optional[str]]:
+    ) -> tuple[FollowUpTask | None, str | None]:
         task = db.session.get(FollowUpTask, task_id)
         if not task:
             return None, "Follow-up task not found."
@@ -491,26 +508,34 @@ class CaseService:
         return task, None
 
     def get_follow_ups_for_case(self, case_id: int) -> list[FollowUpTask]:
-        return FollowUpTask.query.filter_by(case_id=case_id).order_by(
-            FollowUpTask.status.asc(),
-            FollowUpTask.due_date.asc(),
-            FollowUpTask.created_at.desc(),
-        ).all()
+        return (
+            FollowUpTask.query.filter_by(case_id=case_id)
+            .order_by(
+                FollowUpTask.status.asc(),
+                FollowUpTask.due_date.asc(),
+                FollowUpTask.created_at.desc(),
+            )
+            .all()
+        )
 
     def get_upcoming_follow_ups(self) -> list[FollowUpTask]:
-        return FollowUpTask.query.filter_by(status=FollowUpStatus.OPEN).order_by(
-            FollowUpTask.due_date.asc(),
-            FollowUpTask.created_at.desc(),
-        ).all()
+        return (
+            FollowUpTask.query.filter_by(status=FollowUpStatus.OPEN)
+            .order_by(
+                FollowUpTask.due_date.asc(),
+                FollowUpTask.created_at.desc(),
+            )
+            .all()
+        )
 
     def add_attachment(
         self,
         case_id: int,
         user_id: int,
         file: FileStorage,
-        interaction_id: Optional[int] = None,
-        kind: Optional[str] = None,
-    ) -> Tuple[Optional[CaseAttachment], Optional[str]]:
+        interaction_id: int | None = None,
+        kind: str | None = None,
+    ) -> tuple[CaseAttachment | None, str | None]:
         if not file or not file.filename:
             return None, "Choose a file to upload."
 
@@ -551,9 +576,11 @@ class CaseService:
         return attachment, None
 
     def get_attachments_for_case(self, case_id: int) -> list[CaseAttachment]:
-        return CaseAttachment.query.filter_by(case_id=case_id).order_by(
-            CaseAttachment.created_at.desc()
-        ).all()
+        return (
+            CaseAttachment.query.filter_by(case_id=case_id)
+            .order_by(CaseAttachment.created_at.desc())
+            .all()
+        )
 
     def reporting_summary(self) -> dict:
         cases = self.case_repo.get_active()
@@ -570,7 +597,9 @@ class CaseService:
             project_counts[project_label] = project_counts.get(project_label, 0) + 1
             risk_counts[case.risk_rating] = risk_counts.get(case.risk_rating, 0) + 1
             if case.current_situation:
-                situation_counts[case.current_situation] = situation_counts.get(case.current_situation, 0) + 1
+                situation_counts[case.current_situation] = (
+                    situation_counts.get(case.current_situation, 0) + 1
+                )
 
         return {
             "total_cases": len(cases),
@@ -581,7 +610,7 @@ class CaseService:
             "tag_counts": tag_counts,
         }
 
-    def mark_note_reviewed(self, note_id: int, user_id: Optional[int] = None) -> Optional[CaseNote]:
+    def mark_note_reviewed(self, note_id: int, user_id: int | None = None) -> CaseNote | None:
         """Mark a transcribed note as reviewed."""
         note = self.note_repo.get_by_id(note_id)
         if note:
@@ -597,7 +626,7 @@ class CaseService:
             return updated
         return None
 
-    def delete_note(self, note_id: int, user_id: Optional[int] = None) -> bool:
+    def delete_note(self, note_id: int, user_id: int | None = None) -> bool:
         """Delete a specific note."""
         note = self.note_repo.get_by_id(note_id)
         if note:
@@ -614,9 +643,12 @@ class CaseService:
         return False
 
     def update_category(
-        self, case: Case, category: str, user_id: Optional[int] = None,
-        ni_number: Optional[str] = None,
-    ) -> Tuple[Optional[Case], Optional[str]]:
+        self,
+        case: Case,
+        category: str,
+        user_id: int | None = None,
+        ni_number: str | None = None,
+    ) -> tuple[Case | None, str | None]:
         """Update case category with audit logging.
 
         Category progression is one-way:
@@ -674,7 +706,7 @@ class CaseService:
 
     def update_ni_number(
         self, case: Case, ni_number: str, user_id: int
-    ) -> Tuple[Optional[Case], Optional[str]]:
+    ) -> tuple[Case | None, str | None]:
         """Update National Insurance number with audit logging."""
         if not ni_number or not ni_number.strip():
             return None, "NI number is required"
@@ -700,6 +732,7 @@ class CaseService:
     def get_actions_for_case(self, case_id: int) -> list:
         """Get all actions for a case."""
         from app.repositories.case_action_repository import CaseActionRepository
+
         action_repo = CaseActionRepository()
         return action_repo.get_by_case_id(case_id)
 
@@ -715,7 +748,7 @@ class CaseService:
         Predefined actions use their type as action_type.
         Custom actions use "custom" as action_type with a user-provided label.
         """
-        from app.models.case_action import CaseAction, PredefinedAction
+        from app.models.case_action import PredefinedAction
         from app.repositories.case_action_repository import CaseActionRepository
 
         action_repo = CaseActionRepository()
@@ -753,7 +786,7 @@ class CaseService:
 
         return created
 
-    def delete_case(self, case: Case, user_id: Optional[int] = None) -> None:
+    def delete_case(self, case: Case, user_id: int | None = None) -> None:
         """Archive a case without destroying safeguarding history."""
         if user_id:
             self.audit_service.log_delete(
@@ -765,9 +798,7 @@ class CaseService:
 
         self.case_repo.update(case, archived_at=datetime.now(UTC))
 
-    def _save_voice_note(
-        self, file: FileStorage, identifier: str
-    ) -> Optional[str]:
+    def _save_voice_note(self, file: FileStorage, identifier: str) -> str | None:
         """Save a voice note file and return its relative path."""
         if not file.filename:
             return None
@@ -789,11 +820,11 @@ class CaseService:
 
     def _validate_choices(
         self,
-        consent_status: Optional[str] = None,
-        risk_rating: Optional[str] = None,
-        project: Optional[str] = None,
-        ethnicity: Optional[str] = None,
-    ) -> Optional[str]:
+        consent_status: str | None = None,
+        risk_rating: str | None = None,
+        project: str | None = None,
+        ethnicity: str | None = None,
+    ) -> str | None:
         if consent_status and consent_status not in ConsentStatus.CHOICES:
             return "Choose a consent status from the list."
         if risk_rating and risk_rating not in RiskRating.CHOICES:
@@ -804,7 +835,7 @@ class CaseService:
             return "Choose an ethnicity from the list."
         return None
 
-    def _resolve_key_worker(self, key_worker_id) -> Tuple[Optional[int], Optional[str]]:
+    def _resolve_key_worker(self, key_worker_id) -> tuple[int | None, str | None]:
         """Turn a submitted key worker value into a user id (None clears it)."""
         if key_worker_id in ("", None):
             return None, None
@@ -822,14 +853,14 @@ class CaseService:
         Older versions of the app used a rich-text editor that could submit
         empty HTML tags; keep this defensive check for existing clients.
         """
-        import re
-        # Strip all HTML tags
-        text = re.sub(r"<[^>]+>", "", html_content)
-        # Strip whitespace and common empty placeholders
-        text = text.replace("\n", "").replace("\r", "").strip()
-        return len(text) > 0
+        return has_visible_text(html_content)
 
-    def _calculate_age(self, date_of_birth: Optional[str]) -> Optional[int]:
+    @staticmethod
+    def note_too_long(*texts: str | None) -> bool:
+        """True if any of the given free-text note values exceeds MAX_NOTE_LENGTH."""
+        return any(text is not None and len(text) > MAX_NOTE_LENGTH for text in texts)
+
+    def _calculate_age(self, date_of_birth: str | None) -> int | None:
         if not date_of_birth:
             return None
 
@@ -846,29 +877,31 @@ class CaseService:
 
     def _has_minimum_identifying_detail(
         self,
-        full_name: Optional[str],
-        phone_number: Optional[str],
-        location_w3w: Optional[str],
-        notes_content: Optional[str],
-        voice_transcript: Optional[str],
-        date_of_birth: Optional[str],
-        physical_description: Optional[str],
-        location_address: Optional[str] = None,
-        other_contact: Optional[str] = None,
-        ni_number: Optional[str] = None,
+        full_name: str | None,
+        phone_number: str | None,
+        location_w3w: str | None,
+        notes_content: str | None,
+        voice_transcript: str | None,
+        date_of_birth: str | None,
+        physical_description: str | None,
+        location_address: str | None = None,
+        other_contact: str | None = None,
+        ni_number: str | None = None,
     ) -> bool:
-        return any([
-            bool((location_address or "").strip()),
-            bool((other_contact or "").strip()),
-            bool((ni_number or "").strip()),
-            bool((full_name or "").strip()),
-            bool((phone_number or "").strip()),
-            bool((location_w3w or "").strip()),
-            self._has_meaningful_content(notes_content or ""),
-            bool((voice_transcript or "").strip()),
-            bool((date_of_birth or "").strip()),
-            bool((physical_description or "").strip()),
-        ])
+        return any(
+            [
+                bool((location_address or "").strip()),
+                bool((other_contact or "").strip()),
+                bool((ni_number or "").strip()),
+                bool((full_name or "").strip()),
+                bool((phone_number or "").strip()),
+                bool((location_w3w or "").strip()),
+                self._has_meaningful_content(notes_content or ""),
+                bool((voice_transcript or "").strip()),
+                bool((date_of_birth or "").strip()),
+                bool((physical_description or "").strip()),
+            ]
+        )
 
     def _transcribe_and_create_note(self, case: Case) -> None:
         """Send voice note to transcription service and create a note.
@@ -877,9 +910,7 @@ class CaseService:
         transcription to complete. If the service is unavailable or fails,
         we log the error but don't block case creation.
         """
-        audio_path = os.path.join(
-            current_app.config["UPLOAD_FOLDER"], case.voice_note_path
-        )
+        audio_path = os.path.join(current_app.config["UPLOAD_FOLDER"], case.voice_note_path)
 
         transcript = self.transcription_client.transcribe(audio_path)
 
@@ -889,9 +920,7 @@ class CaseService:
                 content=f"<p>{transcript}</p>",
                 source=NoteSource.TRANSCRIPTION,
             )
-            logger.info(
-                f"Transcription note created for case {case.identifier}"
-            )
+            logger.info(f"Transcription note created for case {case.identifier}")
         else:
             logger.warning(
                 f"Transcription failed for case {case.identifier}, "

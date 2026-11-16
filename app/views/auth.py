@@ -74,8 +74,7 @@ def login():
             # The same message for a locked account and a throttled IP, so the
             # response does not confirm whether an address is registered.
             flash(
-                "Too many failed attempts. Try again in "
-                f"{decision.retry_after_minutes} minute(s).",
+                f"Too many failed attempts. Try again in {decision.retry_after_minutes} minute(s).",
                 category="error",
             )
             return render_template("auth/login.html"), 429
@@ -152,9 +151,7 @@ def mfa_setup():
     if current_user.mfa_enabled:
         return redirect(url_for("auth.mfa_status"))
 
-    enrolment = mfa_service.begin_enrolment(
-        current_user, current_app.config["MFA_ISSUER"]
-    )
+    enrolment = mfa_service.begin_enrolment(current_user, current_app.config["MFA_ISSUER"])
     return render_template(
         "auth/mfa_setup.html",
         secret=enrolment.secret,
@@ -211,9 +208,7 @@ def mfa_regenerate_recovery_codes():
     if not current_user.mfa_enabled:
         abort(400)
 
-    session[PENDING_RECOVERY_CODES] = mfa_service.regenerate_recovery_codes(
-        current_user
-    )
+    session[PENDING_RECOVERY_CODES] = mfa_service.regenerate_recovery_codes(current_user)
     flash("New recovery codes issued. The old ones no longer work.", category="success")
     return redirect(url_for("auth.mfa_recovery_codes"))
 
@@ -239,13 +234,10 @@ def mfa_verify():
         decision = throttle.check(user.email, ip_address)
         if not decision.allowed:
             flash(
-                "Too many failed attempts. Try again in "
-                f"{decision.retry_after_minutes} minute(s).",
+                f"Too many failed attempts. Try again in {decision.retry_after_minutes} minute(s).",
                 category="error",
             )
-            return render_template(
-                "auth/mfa_verify.html", shared_demo=shared_demo
-            ), 429
+            return render_template("auth/mfa_verify.html", shared_demo=shared_demo), 429
 
         success, error = mfa_service.verify(
             user, request.form.get("code", ""), accept_any_code=shared_demo
@@ -277,9 +269,7 @@ def _qr_svg(provisioning_uri: str) -> str:
     import qrcode
     import qrcode.image.svg
 
-    image = qrcode.make(
-        provisioning_uri, image_factory=qrcode.image.svg.SvgPathImage
-    )
+    image = qrcode.make(provisioning_uri, image_factory=qrcode.image.svg.SvgPathImage)
     buffer = io.BytesIO()
     image.save(buffer)
     return buffer.getvalue().decode()

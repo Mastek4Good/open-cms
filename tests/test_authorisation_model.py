@@ -9,10 +9,11 @@ direction: if someone narrows visibility, they will have to update the ADR;
 if someone widens an admin-only page to all workers, that will fail here.
 """
 
+from conftest import login_admin, register
+
 from app.extensions import db
 from app.models.case import Case
 from app.models.user import User
-from conftest import login_admin, register
 
 ADMIN_ONLY_PATHS = ["/invite-codes", "/users", "/erasure-log"]
 

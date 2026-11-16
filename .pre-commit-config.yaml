@@ -1,0 +1,99 @@
+# Install once with:  uv run pre-commit install   (see CONTRIBUTING.md)
+#
+# Every hook here is a `local` hook: nothing is cloned from third-party hook
+# repositories. The tools (ruff, uv) come from the locked dev dependencies in
+# uv.lock, and the file hygiene checks are our own code in hooks/checks.py.
+default_install_hook_types: [pre-commit, commit-msg, pre-push]
+default_stages: [pre-commit]
+
+repos:
+  - repo: local
+    hooks:
+      # --- file hygiene (hooks/checks.py) -------------------------------
+      - id: trailing-whitespace
+        name: trailing whitespace
+        entry: uv run python -m hooks.checks trailing-whitespace
+        language: system
+        types: [text]
+        exclude: ^app/static/vendor/
+
+      - id: end-of-file-fixer
+        name: end of file newline
+        entry: uv run python -m hooks.checks end-of-file
+        language: system
+        types: [text]
+        exclude: ^app/static/vendor/
+
+      - id: check-yaml
+        name: check yaml
+        entry: uv run python -m hooks.checks check-yaml
+        language: system
+        types: [yaml]
+
+      - id: check-toml
+        name: check toml
+        entry: uv run python -m hooks.checks check-toml
+        language: system
+        types: [toml]
+
+      - id: check-merge-conflict
+        name: check for merge conflict markers
+        entry: uv run python -m hooks.checks check-merge-conflict
+        language: system
+        types: [text]
+
+      - id: check-added-large-files
+        name: check for large files (over 500 KB)
+        entry: uv run python -m hooks.checks check-large-files
+        language: system
+        exclude: ^(app/static/vendor/|docs/images/)
+
+      - id: detect-private-key
+        name: detect private keys
+        entry: uv run python -m hooks.checks check-private-keys
+        language: system
+        types: [text]
+
+      - id: no-commit-to-branch
+        name: don't commit to main
+        entry: uv run python -m hooks.checks check-branch main
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      # --- lint and format (ruff, from uv.lock) -------------------------
+      - id: ruff
+        name: ruff
+        entry: uv run ruff check --fix --exit-non-zero-on-fix
+        language: system
+        types_or: [python, pyi]
+
+      - id: ruff-format
+        name: ruff format
+        entry: uv run ruff format
+        language: system
+        types_or: [python, pyi]
+
+      # --- lockfile ------------------------------------------------------
+      - id: uv-lock
+        name: uv.lock is up to date
+        entry: uv lock --check
+        language: system
+        pass_filenames: false
+        files: ^(pyproject\.toml|uv\.lock)$
+
+      # --- commit message ------------------------------------------------
+      - id: conventional-commit
+        name: conventional commit message
+        entry: uv run python -m hooks.checks check-commit-message
+        language: system
+        stages: [commit-msg]
+
+      # --- tests (slow, so only before a push) -----------------------------
+      - id: pytest
+        name: pytest
+        entry: uv run pytest -q -x
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]

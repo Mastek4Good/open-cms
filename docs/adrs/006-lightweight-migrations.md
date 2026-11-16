@@ -64,9 +64,7 @@ sequenceDiagram
        if _column_exists("cases", "some_column"):
            return
        logger.info("Applying migration: add some_column to cases")
-       db.session.execute(
-           db.text("ALTER TABLE cases ADD COLUMN some_column VARCHAR(100)")
-       )
+       db.session.execute(db.text("ALTER TABLE cases ADD COLUMN some_column VARCHAR(100)"))
        db.session.commit()
    ```
 

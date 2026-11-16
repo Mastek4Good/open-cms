@@ -1,6 +1,5 @@
 import secrets
 from datetime import UTC, datetime
-from typing import Optional, Tuple
 
 from app.extensions import db
 from app.models.invite_code import InviteCode, InviteCodeStatus
@@ -13,7 +12,7 @@ class InviteService:
     def create_code(
         self,
         created_by_user_id: int,
-        label: Optional[str] = None,
+        label: str | None = None,
         max_uses: int = 1,
     ) -> InviteCode:
         try:
@@ -32,7 +31,7 @@ class InviteService:
         db.session.commit()
         return invite
 
-    def deny_code(self, invite_id: int) -> Tuple[Optional[InviteCode], Optional[str]]:
+    def deny_code(self, invite_id: int) -> tuple[InviteCode | None, str | None]:
         invite = db.session.get(InviteCode, invite_id)
         if not invite:
             return None, "Invite code not found."
@@ -55,9 +54,7 @@ class InviteService:
 
         invite = InviteCode.query.filter_by(code=code).first()
         return bool(
-            invite
-            and invite.status == InviteCodeStatus.ACTIVE
-            and invite.uses < invite.max_uses
+            invite and invite.status == InviteCodeStatus.ACTIVE and invite.uses < invite.max_uses
         )
 
     def consume(

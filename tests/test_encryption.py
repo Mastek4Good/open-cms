@@ -1,6 +1,7 @@
 """Blocker 5: special-category fields are encrypted at rest."""
 
 import pytest
+from conftest import register
 from cryptography.fernet import Fernet
 
 from app.extensions import db
@@ -13,7 +14,6 @@ from app.security.crypto import (
     generate_key,
     parse_keys,
 )
-from conftest import register
 
 ENCRYPTED_COLUMNS = ("ni_number", "risk_notes", "mental_health_notes")
 

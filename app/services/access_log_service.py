@@ -10,7 +10,6 @@ becomes unreadable exactly when someone needs to read it.
 """
 
 from datetime import UTC, datetime, timedelta
-from typing import List, Optional
 
 from app.extensions import db
 from app.models.access_log import AccessAction, AccessLog
@@ -31,11 +30,11 @@ class AccessLogService:
         self,
         user_id: int,
         action: str,
-        case_id: Optional[int] = None,
-        resource: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
-    ) -> Optional[AccessLog]:
+        case_id: int | None = None,
+        resource: str | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+    ) -> AccessLog | None:
         """Record a read event, or return None if it was deduplicated."""
         if self._recently_logged(user_id, action, case_id, resource):
             return None
@@ -52,7 +51,7 @@ class AccessLogService:
         db.session.commit()
         return entry
 
-    def get_for_case(self, case_id: int, limit: int = 50) -> List[AccessLog]:
+    def get_for_case(self, case_id: int, limit: int = 50) -> list[AccessLog]:
         return (
             AccessLog.query.filter_by(case_id=case_id)
             .order_by(AccessLog.created_at.desc())
@@ -60,7 +59,7 @@ class AccessLogService:
             .all()
         )
 
-    def get_for_user(self, user_id: int, limit: int = 100) -> List[AccessLog]:
+    def get_for_user(self, user_id: int, limit: int = 100) -> list[AccessLog]:
         return (
             AccessLog.query.filter_by(user_id=user_id)
             .order_by(AccessLog.created_at.desc())
@@ -68,12 +67,8 @@ class AccessLogService:
             .all()
         )
 
-    def get_recent(self, limit: int = 200) -> List[AccessLog]:
-        return (
-            AccessLog.query.order_by(AccessLog.created_at.desc())
-            .limit(limit)
-            .all()
-        )
+    def get_recent(self, limit: int = 200) -> list[AccessLog]:
+        return AccessLog.query.order_by(AccessLog.created_at.desc()).limit(limit).all()
 
     def prune(self, older_than_days: int) -> int:
         """Delete access log rows past their retention period."""
@@ -92,8 +87,8 @@ class AccessLogService:
         self,
         user_id: int,
         action: str,
-        case_id: Optional[int],
-        resource: Optional[str],
+        case_id: int | None,
+        resource: str | None,
     ) -> bool:
         if self.dedupe_minutes <= 0:
             return False
@@ -103,9 +98,9 @@ class AccessLogService:
             AccessLog.query.filter(
                 AccessLog.user_id == user_id,
                 AccessLog.action == action,
-                AccessLog.case_id.is_(case_id) if case_id is None
-                else AccessLog.case_id == case_id,
-                AccessLog.resource.is_(resource) if resource is None
+                AccessLog.case_id.is_(case_id) if case_id is None else AccessLog.case_id == case_id,
+                AccessLog.resource.is_(resource)
+                if resource is None
                 else AccessLog.resource == resource,
                 AccessLog.created_at >= cutoff,
             ).first()

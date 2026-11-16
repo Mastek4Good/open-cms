@@ -9,10 +9,8 @@ The guard runs only for the production config. Development and test runs are
 deliberately untouched so that `python main.py` still works with no setup.
 """
 
-from typing import List
-
-from config import DEV_DEMO_PASSWORD, DEV_INVITE_CODE, DEV_SECRET_KEY
 from app.security.crypto import parse_keys
+from config import DEV_DEMO_PASSWORD, DEV_INVITE_CODE, DEV_SECRET_KEY
 
 MIN_SECRET_KEY_LENGTH = 32
 
@@ -25,14 +23,14 @@ class ConfigurationError(RuntimeError):
     """
 
 
-def collect_production_config_errors(config) -> List[str]:
+def collect_production_config_errors(config) -> list[str]:
     """Return every reason this configuration is unsafe for production.
 
     All problems are collected rather than raising on the first, so an
     operator fixes their environment file in one pass instead of one restart
     per mistake.
     """
-    errors: List[str] = []
+    errors: list[str] = []
 
     secret_key = config.get("SECRET_KEY") or ""
     if not secret_key:
@@ -46,9 +44,7 @@ def collect_production_config_errors(config) -> List[str]:
             "repository could forge a session cookie for any user."
         )
     elif len(secret_key) < MIN_SECRET_KEY_LENGTH:
-        errors.append(
-            f"SECRET_KEY is shorter than {MIN_SECRET_KEY_LENGTH} characters."
-        )
+        errors.append(f"SECRET_KEY is shorter than {MIN_SECRET_KEY_LENGTH} characters.")
 
     if not parse_keys(config.get("FIELD_ENCRYPTION_KEYS")):
         errors.append(
@@ -59,16 +55,13 @@ def collect_production_config_errors(config) -> List[str]:
 
     if not config.get("SESSION_COOKIE_SECURE"):
         errors.append(
-            "SESSION_COOKIE_SECURE is disabled. Session cookies would be sent "
-            "over plain HTTP."
+            "SESSION_COOKIE_SECURE is disabled. Session cookies would be sent over plain HTTP."
         )
 
     if config.get("BOOTSTRAP_INVITE_ENABLED"):
         invite_code = config.get("SIGNUP_INVITE_CODE") or ""
         if not invite_code:
-            errors.append(
-                "BOOTSTRAP_INVITE_ENABLED is on but SIGNUP_INVITE_CODE is empty."
-            )
+            errors.append("BOOTSTRAP_INVITE_ENABLED is on but SIGNUP_INVITE_CODE is empty.")
         elif invite_code == DEV_INVITE_CODE:
             errors.append(
                 "BOOTSTRAP_INVITE_ENABLED is on with the development invite "
@@ -107,10 +100,7 @@ def collect_production_config_errors(config) -> List[str]:
         )
 
     if config.get("DEBUG"):
-        errors.append(
-            "DEBUG is on. The interactive debugger allows arbitrary code "
-            "execution."
-        )
+        errors.append("DEBUG is on. The interactive debugger allows arbitrary code execution.")
 
     return errors
 

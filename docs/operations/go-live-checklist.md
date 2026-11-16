@@ -134,7 +134,7 @@ These follow from choosing a host and are not blocked on anything else:
 - [ ] **ICO registration** current, and the privacy notice updated to cover
       this processing.
 - [ ] **Production secrets generated and stored** in a secret manager
-      (`python -m scripts.generate_keys`), with `FIELD_ENCRYPTION_KEYS` backed
+      (`uv run python -m scripts.generate_keys`), with `FIELD_ENCRYPTION_KEYS` backed
       up **separately from the database**. Losing it makes encrypted case data
       permanently unreadable.
 - [ ] **Backups scheduled** and their failures alerted on.

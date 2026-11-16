@@ -2,12 +2,13 @@
 
 from datetime import UTC, datetime, timedelta
 
+from conftest import csrf_token, register
+
 from app.extensions import db
 from app.models.access_log import AccessAction, AccessLog
 from app.models.case import Case
 from app.models.user import User
 from app.services.access_log_service import AccessLogService
-from conftest import csrf_token, login_admin, register
 
 
 def create_case(identifier="SOTS-0001", **fields):
@@ -58,9 +59,7 @@ def test_a_view_after_the_window_is_recorded_again(client, app):
     case = create_case()
     client.get(f"/cases/{case.id}")
 
-    stale = datetime.now(UTC) - timedelta(
-        minutes=app.config["ACCESS_LOG_DEDUPE_MINUTES"] + 1
-    )
+    stale = datetime.now(UTC) - timedelta(minutes=app.config["ACCESS_LOG_DEDUPE_MINUTES"] + 1)
     AccessLog.query.update({AccessLog.created_at: stale})
     db.session.commit()
 
@@ -105,9 +104,7 @@ def test_downloading_an_attachment_is_recorded(client):
 
     client.get(f"/attachments/{attachment.id}")
 
-    entry = AccessLog.query.filter_by(
-        action=AccessAction.DOWNLOADED_ATTACHMENT
-    ).one()
+    entry = AccessLog.query.filter_by(action=AccessAction.DOWNLOADED_ATTACHMENT).one()
     assert entry.resource == f"attachment:{attachment.id}"
 
 
@@ -136,9 +133,7 @@ def test_viewing_the_audit_trail_is_itself_recorded(client):
 
     client.get(f"/cases/{case.id}/audit")
 
-    assert AccessLog.query.filter_by(
-        action=AccessAction.VIEWED_AUDIT_TRAIL
-    ).count() == 1
+    assert AccessLog.query.filter_by(action=AccessAction.VIEWED_AUDIT_TRAIL).count() == 1
 
 
 def test_the_access_history_for_a_case_is_readable_in_the_app(client):
@@ -171,9 +166,7 @@ def test_pruning_removes_entries_past_their_retention_period(client, app):
     register(client, "worker@example.org")
     case = create_case()
     client.get(f"/cases/{case.id}")
-    AccessLog.query.update({
-        AccessLog.created_at: datetime.now(UTC) - timedelta(days=400)
-    })
+    AccessLog.query.update({AccessLog.created_at: datetime.now(UTC) - timedelta(days=400)})
     db.session.commit()
 
     pruned = AccessLogService.from_config(app.config).prune(older_than_days=365)

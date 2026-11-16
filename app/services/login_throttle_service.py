@@ -16,7 +16,6 @@ an attacker one full allowance per worker.
 
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Optional
 
 from app.extensions import db
 from app.models.login_attempt import LoginAttempt
@@ -29,7 +28,7 @@ class ThrottleDecision:
 
     allowed: bool
     retry_after_seconds: int = 0
-    reason: Optional[str] = None
+    reason: str | None = None
 
     @property
     def retry_after_minutes(self) -> int:
@@ -61,7 +60,7 @@ class LoginThrottleService:
 
     # --- Checks ----------------------------------------------------------
 
-    def check(self, email: Optional[str], ip_address: Optional[str]) -> ThrottleDecision:
+    def check(self, email: str | None, ip_address: str | None) -> ThrottleDecision:
         """Decide whether this login attempt may proceed."""
         email = self._normalise_email(email)
         now = datetime.now(UTC)
@@ -98,9 +97,7 @@ class LoginThrottleService:
 
     # --- Recording -------------------------------------------------------
 
-    def record_failure(
-        self, email: Optional[str], ip_address: Optional[str]
-    ) -> ThrottleDecision:
+    def record_failure(self, email: str | None, ip_address: str | None) -> ThrottleDecision:
         """Record a failed attempt and lock the account if it tipped the limit."""
         email = self._normalise_email(email)
         self._record(email, ip_address, successful=False)
@@ -114,9 +111,7 @@ class LoginThrottleService:
 
         user = User.query.filter_by(email=email).first()
         if user:
-            user.locked_until = datetime.now(UTC) + timedelta(
-                minutes=self.lockout_minutes
-            )
+            user.locked_until = datetime.now(UTC) + timedelta(minutes=self.lockout_minutes)
             db.session.commit()
 
         return ThrottleDecision(
@@ -125,7 +120,7 @@ class LoginThrottleService:
             reason="account_locked",
         )
 
-    def record_success(self, email: Optional[str], ip_address: Optional[str]) -> None:
+    def record_success(self, email: str | None, ip_address: str | None) -> None:
         """Record a successful login and clear the account's failure state."""
         email = self._normalise_email(email)
         self._record(email, ip_address, successful=True)
@@ -160,9 +155,7 @@ class LoginThrottleService:
 
     # --- Internals -------------------------------------------------------
 
-    def _record(
-        self, email: Optional[str], ip_address: Optional[str], successful: bool
-    ) -> None:
+    def _record(self, email: str | None, ip_address: str | None, successful: bool) -> None:
         db.session.add(
             LoginAttempt(
                 email=email,
@@ -172,9 +165,7 @@ class LoginThrottleService:
         )
         db.session.commit()
 
-    def _recent_failures(
-        self, email: Optional[str] = None, ip_address: Optional[str] = None
-    ) -> int:
+    def _recent_failures(self, email: str | None = None, ip_address: str | None = None) -> int:
         cutoff = datetime.now(UTC) - timedelta(minutes=self.window_minutes)
         query = LoginAttempt.query.filter(
             LoginAttempt.successful.is_(False),
@@ -187,7 +178,7 @@ class LoginThrottleService:
         return query.count()
 
     @staticmethod
-    def _normalise_email(email: Optional[str]) -> Optional[str]:
+    def _normalise_email(email: str | None) -> str | None:
         return email.strip().lower() if email else None
 
     @staticmethod

@@ -1,5 +1,4 @@
 import logging
-from typing import Optional, Tuple
 
 import requests as http_requests
 from flask import current_app
@@ -25,11 +24,11 @@ class W3WService:
     def autosuggest(
         self,
         input_text: str,
-        focus_lat: Optional[float] = None,
-        focus_lng: Optional[float] = None,
-        clip_to_country: Optional[str] = None,
+        focus_lat: float | None = None,
+        focus_lng: float | None = None,
+        clip_to_country: str | None = None,
         language: str = "en",
-    ) -> Tuple[Optional[list], Optional[str]]:
+    ) -> tuple[list | None, str | None]:
         """Get autosuggest results for a partial What3Words address.
 
         The input must contain at least the first two words and the first
@@ -85,12 +84,14 @@ class W3WService:
 
             suggestions = []
             for s in data.get("suggestions", []):
-                suggestions.append({
-                    "words": s.get("words"),
-                    "nearestPlace": s.get("nearestPlace"),
-                    "country": s.get("country"),
-                    "rank": s.get("rank"),
-                })
+                suggestions.append(
+                    {
+                        "words": s.get("words"),
+                        "nearestPlace": s.get("nearestPlace"),
+                        "country": s.get("country"),
+                        "rank": s.get("rank"),
+                    }
+                )
 
             return suggestions, None
 

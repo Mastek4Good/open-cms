@@ -34,8 +34,8 @@ it behind would mean the erasure was not an erasure.
 has elapsed, and prunes access logs and login attempts past theirs.
 
 ```bash
-python -m scripts.retention          # report only - the default
-python -m scripts.retention --apply  # destroy
+uv run python -m scripts.retention          # report only - the default
+uv run python -m scripts.retention --apply  # destroy
 ```
 
 It defaults to a dry run. The alternative is a scheduled job that silently
@@ -44,7 +44,8 @@ destroys casework the first time someone mistimes a cron entry.
 Schedule it daily or weekly:
 
 ```
-30 3 * * 0 cd /srv/quick-capture && /srv/quick-capture/.venv/bin/python -m scripts.retention --apply >> /var/log/quick-capture-retention.log 2>&1
+# cron has a minimal PATH: use the full path to uv (e.g. /usr/local/bin/uv or ~/.local/bin/uv)
+30 3 * * 0 cd /srv/quick-capture && uv run --no-dev --locked python -m scripts.retention --apply >> /var/log/quick-capture-retention.log 2>&1
 ```
 
 ## Retention periods

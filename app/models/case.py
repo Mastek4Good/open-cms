@@ -100,14 +100,10 @@ class Case(db.Model):
     # SQL searchability costs nothing here.
     ni_number = db.Column(EncryptedText, nullable=True)
 
-    consent_status = db.Column(
-        db.String(20), nullable=False, default=ConsentStatus.DEFAULT
-    )
+    consent_status = db.Column(db.String(20), nullable=False, default=ConsentStatus.DEFAULT)
     consent_date = db.Column(db.String(10), nullable=True)
 
-    risk_rating = db.Column(
-        db.String(20), nullable=False, default=RiskRating.DEFAULT
-    )
+    risk_rating = db.Column(db.String(20), nullable=False, default=RiskRating.DEFAULT)
     # Risk and mental health notes are Article 9 special-category data and
     # are encrypted at rest. Dashboard search deliberately does not cover
     # them, so encryption does not break any existing query.
@@ -117,9 +113,7 @@ class Case(db.Model):
 
     # Metadata
     created_at = db.Column(db.DateTime(timezone=True), default=func.now())
-    updated_at = db.Column(
-        db.DateTime(timezone=True), default=func.now(), onupdate=func.now()
-    )
+    updated_at = db.Column(db.DateTime(timezone=True), default=func.now(), onupdate=func.now())
     archived_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
     # Foreign key to the social worker who created it

@@ -1,7 +1,7 @@
 import re
+from html.parser import HTMLParser
 
 import bleach
-
 
 ALLOWED_TAGS = [
     "p",
@@ -20,6 +20,42 @@ ALLOWED_TAGS = [
 ALLOWED_ATTRIBUTES = {
     "span": ["class"],
 }
+
+
+class _TextCollector(HTMLParser):
+    """Collects the text nodes of an HTML fragment."""
+
+    def __init__(self) -> None:
+        # convert_charrefs turns entities like &nbsp; into characters so they
+        # count as (strippable) whitespace rather than visible text.
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+
+    def handle_data(self, data: str) -> None:
+        self.parts.append(data)
+
+
+def visible_text(html: str) -> str:
+    """The text nodes of an HTML fragment, joined with spaces.
+
+    Uses a real (linear-time) HTML parser rather than a tag-stripping regex:
+    patterns like ``<[^>]+>`` backtrack quadratically on untrusted input such as
+    a long run of ``<`` characters with no closing ``>``.
+
+    Tags become spaces rather than vanishing, so ``<p>one</p><p>two</p>`` yields
+    two words rather than the single word "onetwo".
+    """
+    if not html:
+        return ""
+    collector = _TextCollector()
+    collector.feed(html)
+    collector.close()
+    return " ".join(collector.parts)
+
+
+def has_visible_text(html: str) -> bool:
+    """True if the HTML fragment contains any non-whitespace text."""
+    return bool(visible_text(html).strip())
 
 
 def sanitize_html(value: str) -> str:

@@ -54,9 +54,7 @@ class Config:
     # Idle timeout. The cookie is refreshed on every request, so this is time
     # since last activity, not time since login. Short by default because
     # workers carry these sessions on phones in the field.
-    PERMANENT_SESSION_LIFETIME = timedelta(
-        minutes=_env_int("SESSION_IDLE_MINUTES", 30)
-    )
+    PERMANENT_SESSION_LIFETIME = timedelta(minutes=_env_int("SESSION_IDLE_MINUTES", 30))
     SESSION_REFRESH_EACH_REQUEST = True
 
     # --- Login throttling (blocker 3) ------------------------------------
@@ -68,7 +66,7 @@ class Config:
     # --- Field-level encryption (blocker 5) -------------------------------
     # Comma-separated Fernet keys. The first key encrypts; every key is tried
     # when decrypting, which is what makes key rotation possible.
-    # Generate with: python -m scripts.generate_keys
+    # Generate with: uv run python -m scripts.generate_keys
     FIELD_ENCRYPTION_KEYS = os.environ.get("FIELD_ENCRYPTION_KEYS", "")
 
     # --- Multi-factor authentication (blocker 8) --------------------------

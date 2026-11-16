@@ -3,14 +3,13 @@ details, consent and risk options, addresses and follow-ups."""
 
 import io
 
+from conftest import csrf_token, register
+
 from app.extensions import db
 from app.models.case import Case
 from app.models.case_attachment import CaseAttachment
 from app.models.case_note import CaseNote
-from app.models.follow_up_task import FollowUpTask
 from app.models.user import User
-
-from conftest import csrf_token, register
 
 
 def post_new_case(client, **overrides):

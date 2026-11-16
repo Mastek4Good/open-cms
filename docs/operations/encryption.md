@@ -48,7 +48,7 @@ rows as ciphertext on startup, and is safe to run repeatedly.
 encrypts; every key is tried when decrypting.
 
 ```bash
-python -m scripts.generate_keys
+uv run python -m scripts.generate_keys
 ```
 
 **Losing every key that a value was encrypted with makes that value permanently

@@ -1,7 +1,7 @@
 """Reset the shared demo account to its seeded demo cases.
 
-    python -m scripts.reset_demo          # report what would be destroyed
-    python -m scripts.reset_demo --apply  # destroy it and reseed
+    uv run python -m scripts.reset_demo          # report what would be destroyed
+    uv run python -m scripts.reset_demo --apply  # destroy it and reseed
 
 Destroys every case the demo account created, and the seeded demo cases
 (so edits to them are undone), then seeds the demo cases again. Cases

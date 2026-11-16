@@ -19,9 +19,7 @@ class LoginAttempt(db.Model):
     email = db.Column(db.String(150), nullable=True, index=True)
     ip_address = db.Column(db.String(45), nullable=True, index=True)
     successful = db.Column(db.Boolean, nullable=False, default=False)
-    created_at = db.Column(
-        db.DateTime(timezone=True), default=func.now(), index=True
-    )
+    created_at = db.Column(db.DateTime(timezone=True), default=func.now(), index=True)
 
     def __repr__(self):
         outcome = "ok" if self.successful else "failed"
