@@ -18,7 +18,7 @@ jobs:
     # resolved; remove this line to make it a blocking check.
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
       - name: Audit locked runtime dependencies
         run: |
@@ -37,7 +37,7 @@ jobs:
         # Both are interpreted languages, so no build step is needed.
         language: [python, javascript-typescript]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
@@ -50,7 +50,7 @@ jobs:
     name: Secret scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       # The gitleaks CLI is MIT-licensed. The gitleaks-action wrapper needs a paid
